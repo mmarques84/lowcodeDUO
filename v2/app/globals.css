@@ -52,3 +52,14 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+@media print {
+  @page { size: A4; margin: 16mm; }
+  body, main { background: white !important; color: #0f172a !important; }
+  main { overflow: visible !important; }
+  aside, .print-hide { display: none !important; }
+  .print-show { display: block !important; }
+  .print-report { max-width: none !important; padding: 0 !important; }
+  .print-report article { box-shadow: none !important; }
+  .print-report section { break-inside: avoid; }
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

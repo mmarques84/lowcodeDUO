@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel — lowcodeDUO</title>
+<style>
+  :root{
+    --bg:#F2F4F9;
+    --surface:#FFFFFF;
+    --surface-2:#EAEDF4;
+    --surface-3:#E1E5EF;
+    --border:#DBE0EA;
+    --text:#12151C;
+    --text-muted:#5B6273;
+    --text-faint:#8B93A6;
+    --accent:#2B59C3;
+    --accent-soft:#E4EAFB;
+    --live:#187A4C;
+    --live-soft:#E1F3E9;
+    --pending:#A6690A;
+    --pending-soft:#FBEEDA;
+    --danger:#B33A22;
+    --danger-soft:#FAE7E1;
+    --radius-lg:16px; --radius-md:10px; --radius-sm:7px;
+    --shadow:0 1px 2px rgba(18,21,28,.05), 0 8px 24px rgba(18,21,28,.07);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+  }
+  .mono{ font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+  .tabular{ font-variant-numeric: tabular-nums; }
+  button{ font-family:inherit; }
+  input, select{ font-family:inherit; }
+
+  [hidden]{ display:none !important; }
+
+  .banner{
+    background:var(--pending-soft);
+    color:var(--pending);
+    text-align:center;
+    font-size:12.5px;
+    padding:8px 14px;
+    border-bottom:1px solid var(--border);
+  }
+
+  /* ---------- login ---------- */
+  #view-login{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+    background: radial-gradient(600px 260px at 50% -10%, var(--accent-soft), transparent);
+  }
+  .login-card{
+    width:100%; max-width:340px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:30px 26px 26px;
+    box-shadow:var(--shadow);
+  }
+  .brandmark{ display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+  .brandmark .glyph{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--accent); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700; font-size:14px; flex:none;
+  }
+  .brandmark .name{ font-weight:600; font-size:15px; }
+  .brandmark .placeholder{ font-size:10.5px; color:var(--text-faint); }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; }
+  .field input, .field select, .field textarea{
+    width:100%; border:1px solid var(--border); background:var(--surface-2);
+    border-radius:var(--radius-sm); padding:10px 12px; font-size:13.5px; color:var(--text);
+    font-family:inherit; resize:vertical;
+  }
+  .wizard-steps{ display:flex; flex-direction:column; gap:14px; }
+  .wizard-hint{ font-size:12.5px; color:var(--text-muted); margin:0 0 10px; }
+  .wizard-example{ font-size:11px; color:var(--text-faint); margin-top:4px; }
+  .btn{
+    appearance:none; border:none; border-radius:var(--radius-sm);
+    padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer;
+  }
+  .btn-primary{ background:var(--accent); color:#fff; width:100%; margin-top:4px; }
+  .btn-ghost{ background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
+  .btn-sm{ padding:7px 10px; font-size:12.5px; }
+  .login-foot{ text-align:center; margin-top:14px; font-size:12px; color:var(--text-faint); }
+
+  /* ---------- shell ---------- */
+  #view-app{ display:flex; min-height:100vh; }
+  .sidebar{
+    width:220px; flex:none;
+    border-right:1px solid var(--border);
+    background:var(--surface-2);
+    padding:16px 14px;
+    display:flex; flex-direction:column; gap:18px;
+  }
+  .switcher{
+    display:block; width:100%;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:8px 10px; font-size:12.5px; font-weight:600;
+    color:var(--text); cursor:pointer;
+  }
+  nav.navlist{ display:flex; flex-direction:column; gap:2px; }
+  nav.navlist button{
+    all:unset; cursor:pointer;
+    display:flex; align-items:center; gap:9px;
+    padding:8px 9px; border-radius:var(--radius-sm);
+    font-size:13px; font-weight:500; color:var(--text-muted);
+  }
+  nav.navlist button.active{ background:var(--surface); color:var(--text); box-shadow:0 0 0 1px var(--border); }
+
+  .publish-widget{
+    margin-top:auto; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:12px; display:flex; flex-direction:column; gap:9px;
+  }
+  .vrow{ display:flex; align-items:center; justify-content:space-between; font-size:12.5px; }
+  .vrow .lab{ color:var(--text-muted); }
+  .pill{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px;
+    font-size:11px; font-weight:600;
+  }
+  .pill .d{ width:6px;height:6px;border-radius:50%; }
+  .pill.pending{ background:var(--pending-soft); color:var(--pending); }
+  .pill.pending .d{ background:var(--pending); }
+  .pill.live{ background:var(--live-soft); color:var(--live); }
+  .pill.live .d{ background:var(--live); }
+  .widget-note{ font-size:11px; color:var(--text-faint); }
+
+  .main{ flex:1; min-width:0; padding:22px 24px 40px; overflow-x:hidden; }
+  .main-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .main-head h2{ font-size:19px; margin:0; font-weight:700; }
+  .main-head .sub{ font-size:12.5px; color:var(--text-faint); }
+
+  .greet{ font-size:19px; font-weight:700; margin-bottom:2px; }
+  .greet-sub{ color:var(--text-muted); font-size:13px; margin-bottom:20px; }
+  .proj-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+  .proj-card{
+    border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md);
+    padding:16px; display:flex; flex-direction:column; gap:8px; text-align:left; cursor:pointer;
+  }
+  .proj-card .pname{ font-weight:600; font-size:14px; }
+  .proj-card .ptype{ font-size:11.5px; color:var(--text-faint); }
+  .proj-card .pbal{ font-size:21px; font-weight:700; }
+
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+  .kpi{ border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md); padding:14px 16px; }
+  .kpi .lab{ font-size:11.5px; color:var(--text-muted); margin-bottom:6px; }
+  .kpi .val{ font-size:22px; font-weight:700; }
+  .kpi.entrada .val{ color:var(--live); }
+  .kpi.saida .val{ color:var(--danger); }
+
+  .panel{ border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md); padding:16px; margin-bottom:16px; }
+  .panel h3{ font-size:11px; margin:0 0 14px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+
+  .catbar{ display:flex; flex-direction:column; gap:10px; }
+  .catbar-row{ display:grid; grid-template-columns:110px 1fr 90px; align-items:center; gap:10px; font-size:12.5px; }
+  .catbar-track{ height:9px; background:var(--surface-2); border-radius:5px; overflow:hidden; }
+  .catbar-fill{ height:100%; background:var(--accent); border-radius:5px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); font-weight:600; padding:0 10px 8px; border-bottom:1px solid var(--border); }
+  td{ padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:last-child td{ border-bottom:none; }
+  td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .chip{ display:inline-block; background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted); font-size:11px; padding:3px 8px; border-radius:999px; }
+  .typ{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; }
+  .typ .d{ width:7px;height:7px;border-radius:50%; flex:none; }
+  .typ.entrada .d{ background:var(--live); } .typ.entrada{ color:var(--live); }
+  .typ.saida .d{ background:var(--danger); } .typ.saida{ color:var(--danger); }
+  .table-scroll{ overflow-x:auto; }
+
+  .add-form{ display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-bottom:16px; }
+  .add-form .f{ display:flex; flex-direction:column; gap:4px; }
+  .add-form label{ font-size:11px; color:var(--text-muted); font-weight:600; }
+  .add-form input, .add-form select{
+    border:1px solid var(--border); background:var(--surface-2); border-radius:var(--radius-sm);
+    padding:8px 10px; font-size:12.5px; color:var(--text);
+  }
+  .add-form input[type=text].descricao{ width:180px; }
+  .add-form input[type=number]{ width:110px; }
+
+  .layout-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:18px; }
+  .swatches{ display:flex; gap:8px; margin-top:6px; }
+  .swatch{ width:26px;height:26px;border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--border); cursor:pointer; }
+  .swatch.selected{ box-shadow:0 0 0 2px var(--accent); }
+  .preview-box{ border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg); padding:16px; }
+  .preview-box .pv-label{ font-size:11px; color:var(--text-faint); margin-bottom:10px; }
+  .mini-card{ background:var(--surface); border-radius:var(--radius-sm); border:1px solid var(--border); padding:16px; max-width:220px; margin:0 auto; }
+  .mini-card .mglyph{ width:20px;height:20px;border-radius:6px; margin-bottom:10px; background:var(--accent); }
+  .mini-card .mtitle{ font-size:12px; font-weight:600; margin-bottom:10px; }
+  .mini-card .mfield{ height:9px; background:var(--surface-2); border-radius:4px; margin-bottom:6px; }
+  .mini-card .mbtn{ height:24px; border-radius:6px; margin-top:8px; background:var(--accent); }
+  .note-box{ background:var(--accent-soft); border:1px solid var(--border); border-radius:var(--radius-md); padding:13px 14px; font-size:12.5px; display:flex; gap:10px; margin-top:14px; }
+
+  .dropzone{ border:1.5px dashed var(--border); border-radius:var(--radius-md); padding:28px 20px; text-align:center; margin-bottom:18px; }
+  .dropzone .dztitle{ font-weight:600; font-size:13.5px; margin-bottom:4px; }
+  .dropzone .dzsub{ font-size:12px; color:var(--text-faint); margin-bottom:14px; }
+
+  @media (max-width: 720px){
+    #view-app{ flex-direction:column; }
+    .sidebar{ width:100%; flex-direction:row; flex-wrap:wrap; border-right:none; border-bottom:1px solid var(--border); }
+    .switcher{ flex:1 1 100%; }
+    nav.navlist{ flex-direction:row; flex:1 1 100%; overflow-x:auto; }
+    .publish-widget{ margin-top:0; flex:1 1 220px; }
+    .layout-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Protótipo local · vários projetos, ainda sem banco — próximo passo é ligar no MySQL via n8n</div>
+
+<!-- ================= LOGIN ================= -->
+<div id="view-login">
+  <div class="login-card">
+    <div class="brandmark">
+      <div class="glyph">▲</div>
+      <div>
+        <div class="name">nome da marca</div>
+        <div class="placeholder">(espaço reservado pro seu logo)</div>
+      </div>
+    </div>
+    <div class="field"><label>E-mail</label><input id="login-email" type="text" value="marcus@lowcodeduo.com"></div>
+    <div class="field"><label>Senha</label><input id="login-pass" type="password" value="123456"></div>
+    <button class="btn btn-primary" onclick="entrar()">Entrar</button>
+    <div class="login-foot">Login de exemplo — qualquer valor entra. Login de verdade por cliente vem quando ligarmos o MySQL.</div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="view-app" hidden>
+  <div class="sidebar">
+    <select class="switcher" id="projeto-switcher" onchange="trocarProjeto(this.value)"></select>
+    <nav class="navlist">
+      <button data-screen="home" class="active" onclick="mostrarTela('home')">Início</button>
+      <button data-screen="relatorios" onclick="mostrarTela('relatorios')">Relatórios</button>
+      <button data-screen="layout" onclick="mostrarTela('layout')">Editar layout</button>
+      <button data-screen="excel" onclick="mostrarTela('excel')">Importar Excel</button>
+    </nav>
+    <div class="publish-widget">
+      <div class="vrow"><span class="lab">Versão</span><span class="pill pending" id="version-pill"><span class="d"></span>v1 local</span></div>
+      <div class="widget-note" id="version-note">Ainda não publicada — isso acontece quando ligarmos o fluxo de Git/VPS.</div>
+      <button class="btn btn-ghost btn-sm" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- HOME -->
+    <section data-screen="home">
+      <div class="greet">Olá, Marcus</div>
+      <div class="greet-sub">Seus projetos</div>
+      <div class="proj-grid" id="home-proj-grid"></div>
+    </section>
+
+    <!-- RELATORIOS -->
+    <section data-screen="relatorios" hidden>
+      <div class="main-head"><div><h2>Relatórios</h2><div class="sub" id="main-relatorios-sub"></div></div></div>
+
+      <div class="kpis">
+        <div class="kpi entrada"><div class="lab">Entradas</div><div class="val tabular" id="kpi-entradas">R$ 0,00</div></div>
+        <div class="kpi saida"><div class="lab">Saídas</div><div class="val tabular" id="kpi-saidas">R$ 0,00</div></div>
+        <div class="kpi"><div class="lab">Saldo</div><div class="val tabular" id="kpi-saldo">R$ 0,00</div></div>
+      </div>
+
+      <div class="panel">
+        <h3>Novo lançamento</h3>
+        <div class="add-form">
+          <div class="f"><label>Data</label><input type="date" id="f-data"></div>
+          <div class="f"><label>Descrição</label><input type="text" class="descricao" id="f-desc" placeholder="ex: Aluguel recebido"></div>
+          <div class="f"><label>Categoria</label><input type="text" id="f-cat" list="cat-list" placeholder="ex: Aluguel"></div>
+          <datalist id="cat-list"></datalist>
+          <div class="f"><label>Tipo</label>
+            <select id="f-tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+          </div>
+          <div class="f"><label>Valor (R$)</label><input type="number" step="0.01" id="f-valor" placeholder="0,00"></div>
+          <div class="f"><label>Status</label>
+            <select id="f-status"><option value="pendente">Pendente</option><option value="pago">Pago</option></select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="adicionarLancamento()">Adicionar</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Saldo por categoria</h3>
+        <div class="catbar" id="catbar"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Lançamentos</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+            <tbody id="tbody-lancamentos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- EDITAR LAYOUT -->
+    <section data-screen="layout" hidden>
+      <div class="main-head"><div><h2>Editar layout</h2><div class="sub">Ajustes visuais — aplicam na hora</div></div></div>
+      <div class="layout-grid">
+        <div>
+          <div class="field"><label>Nome do sistema</label><input type="text" id="cfg-nome"></div>
+          <div class="field">
+            <label>Cor primária</label>
+            <div class="swatches">
+              <div class="swatch" style="background:#2B59C3" onclick="setCor('#2B59C3', this)"></div>
+              <div class="swatch" style="background:#187A4C" onclick="setCor('#187A4C', this)"></div>
+              <div class="swatch" style="background:#A6690A" onclick="setCor('#A6690A', this)"></div>
+              <div class="swatch" style="background:#B33A22" onclick="setCor('#B33A22', this)"></div>
+              <div class="swatch" style="background:#5B6273" onclick="setCor('#5B6273', this)"></div>
+            </div>
+          </div>
+          <div class="field"><label>Texto de boas-vindas</label><input type="text" id="cfg-texto"></div>
+          <button class="btn btn-primary" onclick="salvarLayout()">Salvar alterações</button>
+          <div class="note-box" style="margin-top:14px;">
+            <span>🔗</span>
+            <span>Cada projeto publica no próprio endereço, nomeado a partir do nome dele: <span class="mono" id="cfg-slug-preview">/apps/aluguel-ape-rua-x/</span>. Mudar o nome do projeto muda esse endereço.</span>
+          </div>
+        </div>
+        <div>
+          <div class="preview-box">
+            <div class="pv-label">pré-visualização</div>
+            <div class="mini-card">
+              <div class="mglyph" id="pv-glyph"></div>
+              <div class="mtitle" id="pv-titulo"></div>
+              <div class="mfield" style="width:100%"></div>
+              <div class="mfield" style="width:70%"></div>
+              <div class="mbtn" id="pv-btn"></div>
+            </div>
+          </div>
+          <div class="note-box">
+            <span>🛈</span>
+            <span>Mudança estrutural (nova seção, campo novo)? Isso não é ajuste de layout — isso vira um pedido pra IA, gerando uma versão nova pra revisar antes de publicar.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPORTAR EXCEL -->
+    <section data-screen="excel" hidden>
+      <div class="main-head"><div><h2>Importar Excel</h2><div class="sub" id="main-excel-sub"></div></div></div>
+      <div class="panel" style="margin-bottom:0;">
+        <h3>Importar Excel</h3>
+        <p class="wizard-hint">Um único fluxo pra qualquer planilha: suba o arquivo, o sistema lê as colunas, confirma com você do que se trata, e monta um relatório adaptado — ou, se reconhecer o formato de lançamentos, oferece importar direto pra lista do projeto selecionado acima.</p>
+
+        <div class="wizard-steps">
+          <div id="wizard-step-0">
+            <div class="dropzone" style="margin-bottom:0;">
+              <div class="dztitle">Selecione sua planilha .xlsx</div>
+              <div class="dzsub">Qualquer estrutura de colunas — controle de estoque, vendas, lista de clientes, lançamentos, etc.</div>
+              <input type="file" id="wizard-input" accept=".xlsx,.xls" onchange="wizardParse(event)">
+            </div>
+          </div>
+
+          <div id="wizard-step-1" hidden>
+            <p class="wizard-hint">Colunas detectadas:</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Coluna</th><th>Tipo detectado</th><th>Exemplo</th></tr></thead>
+                <tbody id="wizard-colunas"></tbody>
+              </table>
+            </div>
+
+            <div class="note-box" id="wizard-atalho-lancamentos" hidden style="border-color:var(--accent);">
+              <span>🔁</span>
+              <span>Essa planilha parece um formato de lançamentos (data, descrição, categoria, tipo, valor). <button class="btn btn-primary btn-sm" style="margin-left:4px;" onclick="wizardImportarComoLancamentos()">Importar direto pra lista</button></span>
+            </div>
+
+            <div class="field" style="margin-top:14px;">
+              <label>Sobre o que é essa planilha?</label>
+              <input type="text" id="wizard-negocio">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="wizardConfirmarEstrutura()">Confirmar estrutura</button>
+          </div>
+
+          <div id="wizard-step-2" hidden>
+            <div class="field">
+              <label>O que você quer que o sistema monte com esses dados?</label>
+              <textarea id="wizard-prompt" rows="3" placeholder="ex: mostre o total por categoria e uma lista com tudo"></textarea>
+              <div class="wizard-example">Esse texto simula o prompt real que, no fluxo completo, vai pra API do Claude.</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="wizardGerar()">Gerar relatório</button>
+          </div>
+
+          <div id="wizard-step-3" hidden>
+            <div class="note-box" style="margin-top:0; margin-bottom:14px;">
+              <span>🛈</span>
+              <span>Isso é uma simulação local de "o que a IA montaria" — sem chamar a API de verdade ainda. No fluxo real (fase 2), seu pedido acima vai pro Claude e ele decide os gráficos certos.</span>
+            </div>
+            <div class="kpis" id="wizard-kpis"></div>
+            <div class="panel" style="background:var(--bg); box-shadow:none;">
+              <h3 id="wizard-chart-title">Total por categoria</h3>
+              <div class="catbar" id="wizard-catbar"></div>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead id="wizard-thead"></thead>
+                <tbody id="wizard-tbody"></tbody>
+              </table>
+            </div>
+            <div class="wizard-example" id="wizard-truncado" style="margin-top:8px;"></div>
+
+            <div class="note-box" id="wizard-confirmado" hidden style="background:var(--live-soft); border-color:var(--live);">
+              <span>✅</span>
+              <span>Confirmado — isso simula virar a próxima versão deste projeto. No fluxo real, essa etapa dispara o publicar de verdade (troca <span class="mono">current → vN</span> dentro de <span class="mono" id="wizard-confirmado-path"></span> na VPS).</span>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+              <button class="btn btn-primary btn-sm" style="background:var(--live);" onclick="wizardConfirmar()">✅ Confirmar e publicar</button>
+              <button class="btn btn-ghost btn-sm" onclick="wizardAjustar()">Ajustar pedido</button>
+              <button class="btn btn-ghost btn-sm" onclick="wizardReiniciar()">Resetar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  // ---------- estado (em memória — some ao recarregar a página) ----------
+  // Multi-cliente/multi-projeto: cada objeto em `projetos` é um sistema separado
+  // (o que na tabela `projetos` do MySQL seria uma linha, com usuario_id dono dela).
+  var projetos = [
+    {
+      id: 1,
+      nome: 'Aluguel Apê Rua X',
+      slug: 'aluguel-ape-rua-x',
+      tipo: 'aluguel',
+      cor: '#2B59C3',
+      textoBoasVindas: 'Bem-vindo ao controle do Apê Rua X',
+      versao: 1,
+      publicado: false,
+      lancamentos: [
+        {data:'2026-09-05', descricao:'Aluguel recebido', categoria:'Aluguel', tipo:'entrada', valor:1800, status:'pago'},
+        {data:'2026-09-10', descricao:'Condomínio', categoria:'Condomínio', tipo:'saida', valor:450, status:'pago'},
+        {data:'2026-09-15', descricao:'IPTU', categoria:'Impostos', tipo:'saida', valor:230, status:'pago'},
+        {data:'2026-09-20', descricao:'Aluguel recebido (adiantamento)', categoria:'Aluguel', tipo:'entrada', valor:1400, status:'pago'},
+        {data:'2026-09-28', descricao:'Manutenção elétrica', categoria:'Manutenção', tipo:'saida', valor:300, status:'pendente'}
+      ]
+    },
+    {
+      id: 2,
+      nome: 'Loja Centro Comercial',
+      slug: 'loja-centro-comercial',
+      tipo: 'loja',
+      cor: '#187A4C',
+      textoBoasVindas: 'Bem-vindo ao painel da loja',
+      versao: 1,
+      publicado: false,
+      lancamentos: [
+        {data:'2026-09-01', descricao:'Venda balcão', categoria:'Vendas', tipo:'entrada', valor:1290, status:'pago'},
+        {data:'2026-09-04', descricao:'Reposição de estoque', categoria:'Estoque', tipo:'saida', valor:640, status:'pago'},
+        {data:'2026-09-09', descricao:'Venda balcão', categoria:'Vendas', tipo:'entrada', valor:980, status:'pago'},
+        {data:'2026-09-12', descricao:'Aluguel do ponto', categoria:'Aluguel', tipo:'saida', valor:1500, status:'pendente'},
+        {data:'2026-09-18', descricao:'Venda balcão', categoria:'Vendas', tipo:'entrada', valor:1740, status:'pago'}
+      ]
+    }
+  ];
+
+  var projetoAtualId = 1;
+  function projetoAtual(){ return projetos.find(function(p){ return p.id === projetoAtualId; }); }
+
+  function slugify(s){
+    return (s || '').toString().toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-+|-+$)/g, '') || 'projeto';
+  }
+
+  function fmtBRL(v){
+    return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  }
+
+  function entrar(){
+    document.getElementById('view-login').hidden = true;
+    document.getElementById('view-app').hidden = false;
+    popularSwitcher();
+    trocarProjeto(projetoAtualId);
+  }
+  function sair(){
+    document.getElementById('view-app').hidden = true;
+    document.getElementById('view-login').hidden = false;
+  }
+
+  function mostrarTela(nome){
+    document.querySelectorAll('nav.navlist button').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-screen') === nome);
+    });
+    document.querySelectorAll('.main > section').forEach(function(s){
+      s.hidden = s.getAttribute('data-screen') !== nome;
+    });
+  }
+
+  function popularSwitcher(){
+    var sel = document.getElementById('projeto-switcher');
+    sel.innerHTML = projetos.map(function(p){ return '<option value="' + p.id + '">' + p.nome + '</option>'; }).join('');
+  }
+
+  function trocarProjeto(id){
+    projetoAtualId = Number(id);
+    var p = projetoAtual();
+    document.getElementById('projeto-switcher').value = p.id;
+    document.documentElement.style.setProperty('--accent', p.cor);
+    document.getElementById('main-relatorios-sub').textContent = p.nome;
+    document.getElementById('main-excel-sub').textContent = p.nome;
+    document.getElementById('cfg-nome').value = p.nome;
+    document.getElementById('cfg-texto').value = p.textoBoasVindas;
+    document.getElementById('cfg-slug-preview').textContent = '/apps/' + p.slug + '/';
+    document.getElementById('pv-titulo').textContent = p.nome;
+    document.getElementById('pv-glyph').style.background = p.cor;
+    document.getElementById('pv-btn').style.background = p.cor;
+    atualizarSidebarPill();
+    renderHome();
+    renderTudo();
+  }
+
+  function irParaProjeto(id){
+    trocarProjeto(id);
+    mostrarTela('relatorios');
+  }
+
+  function renderHome(){
+    var el = document.getElementById('home-proj-grid');
+    el.innerHTML = projetos.map(function(p){
+      var saldo = p.lancamentos.reduce(function(s,l){ return s + (l.tipo === 'entrada' ? l.valor : -l.valor); }, 0);
+      var pillClass = p.publicado ? 'pill live' : 'pill pending';
+      return '<div class="proj-card" onclick="irParaProjeto(' + p.id + ')">' +
+        '<div class="pname">' + p.nome + '</div>' +
+        '<div class="ptype">tipo: ' + p.tipo + ' · <span class="mono">/apps/' + p.slug + '/</span></div>' +
+        '<div class="pbal tabular">' + fmtBRL(saldo) + '</div>' +
+        '<span class="' + pillClass + '" style="width:fit-content"><span class="d"></span>v' + p.versao + ' local</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function atualizarSidebarPill(){
+    var p = projetoAtual();
+    var pill = document.getElementById('version-pill');
+    pill.className = p.publicado ? 'pill live' : 'pill pending';
+    pill.innerHTML = '<span class="d"></span>v' + p.versao + ' local';
+    document.getElementById('version-note').textContent = p.publicado
+      ? 'Confirmada (simulado) — sem Git/VPS ainda, então não sai deste navegador.'
+      : 'Ainda não publicada — isso acontece quando ligarmos o fluxo de Git/VPS.';
+  }
+
+  function renderTudo(){
+    renderKPIs();
+    renderCategorias();
+    renderTabela();
+    renderCategoriasDatalist();
+  }
+
+  function renderKPIs(){
+    var lancamentos = projetoAtual().lancamentos;
+    var entradas = lancamentos.filter(function(l){return l.tipo==='entrada';}).reduce(function(s,l){return s+l.valor;},0);
+    var saidas = lancamentos.filter(function(l){return l.tipo==='saida';}).reduce(function(s,l){return s+l.valor;},0);
+    var saldo = entradas - saidas;
+    document.getElementById('kpi-entradas').textContent = fmtBRL(entradas);
+    document.getElementById('kpi-saidas').textContent = fmtBRL(saidas);
+    document.getElementById('kpi-saldo').textContent = fmtBRL(saldo);
+  }
+
+  function renderCategorias(){
+    var lancamentos = projetoAtual().lancamentos;
+    var porCategoria = {};
+    lancamentos.forEach(function(l){
+      var sinal = l.tipo === 'entrada' ? 1 : -1;
+      porCategoria[l.categoria] = (porCategoria[l.categoria] || 0) + sinal * l.valor;
+    });
+    var max = Math.max.apply(null, Object.keys(porCategoria).map(function(k){return Math.abs(porCategoria[k]);}).concat([1]));
+    var el = document.getElementById('catbar');
+    el.innerHTML = '';
+    Object.keys(porCategoria).forEach(function(cat){
+      var v = porCategoria[cat];
+      var pct = Math.round(Math.abs(v) / max * 100);
+      var row = document.createElement('div');
+      row.className = 'catbar-row';
+      row.innerHTML =
+        '<span>' + cat + '</span>' +
+        '<span class="catbar-track"><span class="catbar-fill" style="width:' + pct + '%; background:' + (v<0 ? 'var(--danger)' : 'var(--accent)') + '"></span></span>' +
+        '<span class="tabular" style="text-align:right">' + fmtBRL(v) + '</span>';
+      el.appendChild(row);
+    });
+  }
+
+  function renderTabela(){
+    var lancamentos = projetoAtual().lancamentos;
+    var tbody = document.getElementById('tbody-lancamentos');
+    tbody.innerHTML = '';
+    var indices = lancamentos.map(function(_, i){ return i; });
+    indices.sort(function(a,b){ return lancamentos[a].data < lancamentos[b].data ? 1 : -1; });
+    indices.forEach(function(i){
+      var l = lancamentos[i];
+      var tr = document.createElement('tr');
+      var dataFmt = l.data.split('-').reverse().slice(0,2).join('/');
+      var statusPago = l.status === 'pago';
+      tr.innerHTML =
+        '<td class="mono">' + dataFmt + '</td>' +
+        '<td>' + l.descricao + '</td>' +
+        '<td><span class="chip">' + l.categoria + '</span></td>' +
+        '<td><span class="typ ' + l.tipo + '"><span class="d"></span>' + (l.tipo==='entrada'?'Entrada':'Saída') + '</span></td>' +
+        '<td><span class="pill ' + (statusPago ? 'live' : 'pending') + '" style="cursor:pointer" onclick="togglePago(' + i + ')"><span class="d"></span>' + (statusPago ? 'Pago' : 'Pendente') + '</span></td>' +
+        '<td class="num">' + fmtBRL(l.valor) + '</td>' +
+        '<td><div style="display:flex; gap:6px;">' +
+          '<button class="btn btn-ghost btn-sm" onclick="editarLancamento(' + i + ')">Editar</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="excluirLancamento(' + i + ')">Excluir</button>' +
+        '</div></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function togglePago(i){
+    var l = projetoAtual().lancamentos[i];
+    l.status = l.status === 'pago' ? 'pendente' : 'pago';
+    renderTabela();
+  }
+
+  function editarLancamento(i){
+    var l = projetoAtual().lancamentos[i];
+    var novaDesc = prompt('Descrição:', l.descricao);
+    if (novaDesc === null) return;
+    var novaCat = prompt('Categoria:', l.categoria);
+    if (novaCat === null) return;
+    var novoValor = prompt('Valor (R$):', l.valor);
+    if (novoValor === null) return;
+    novoValor = parseFloat(String(novoValor).replace(',', '.'));
+    if (isNaN(novoValor)){ alert('Valor inválido — nada foi alterado.'); return; }
+    l.descricao = novaDesc.trim() || l.descricao;
+    l.categoria = novaCat.trim() || l.categoria;
+    l.valor = novoValor;
+    renderTudo();
+    renderHome();
+  }
+
+  function excluirLancamento(i){
+    var lancamentos = projetoAtual().lancamentos;
+    if (!confirm('Excluir "' + lancamentos[i].descricao + '"?')) return;
+    lancamentos.splice(i, 1);
+    renderTudo();
+    renderHome();
+  }
+
+  function renderCategoriasDatalist(){
+    var cats = Array.from(new Set(projetoAtual().lancamentos.map(function(l){return l.categoria;})));
+    var dl = document.getElementById('cat-list');
+    dl.innerHTML = cats.map(function(c){return '<option value="'+c+'">';}).join('');
+  }
+
+  function adicionarLancamento(){
+    var data = document.getElementById('f-data').value;
+    var desc = document.getElementById('f-desc').value.trim();
+    var cat = document.getElementById('f-cat').value.trim();
+    var tipo = document.getElementById('f-tipo').value;
+    var status = document.getElementById('f-status').value;
+    var valor = parseFloat(document.getElementById('f-valor').value);
+
+    if(!data || !desc || !cat || isNaN(valor)){
+      alert('Preencha data, descrição, categoria e valor.');
+      return;
+    }
+    projetoAtual().lancamentos.push({data:data, descricao:desc, categoria:cat, tipo:tipo, valor:valor, status:status});
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-cat').value = '';
+    document.getElementById('f-valor').value = '';
+    renderTudo();
+    renderHome();
+  }
+
+  // ---------- editar layout ----------
+  var corSelecionada = null;
+  function setCor(hex, el){
+    corSelecionada = hex;
+    document.documentElement.style.setProperty('--accent', hex);
+    document.querySelectorAll('.swatch').forEach(function(s){ s.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById('pv-glyph').style.background = hex;
+    document.getElementById('pv-btn').style.background = hex;
+  }
+  function salvarLayout(){
+    var p = projetoAtual();
+    var nomeNovo = document.getElementById('cfg-nome').value || p.nome;
+    var nomeMudou = nomeNovo !== p.nome;
+    p.nome = nomeNovo;
+    p.textoBoasVindas = document.getElementById('cfg-texto').value || p.textoBoasVindas;
+    if (corSelecionada) p.cor = corSelecionada;
+    if (nomeMudou) p.slug = slugify(p.nome);
+    popularSwitcher();
+    document.getElementById('projeto-switcher').value = p.id;
+    document.getElementById('main-relatorios-sub').textContent = p.nome;
+    document.getElementById('main-excel-sub').textContent = p.nome;
+    document.getElementById('cfg-slug-preview').textContent = '/apps/' + p.slug + '/';
+    document.getElementById('pv-titulo').textContent = p.nome;
+    renderHome();
+    alert('Layout salvo (só nesta sessão do navegador).' + (nomeMudou ? ' Endereço de publicação atualizado pra /apps/' + p.slug + '/.' : ''));
+  }
+
+  // ---------- assistente único de importação (detecta qualquer estrutura) ----------
+  var wizardRows = [];
+  var wizardColunasInfo = [];
+
+  function pareceNumero(v){
+    if (v === '' || v === null || v === undefined) return false;
+    var n = Number(String(v).replace(/\./g,'').replace(',', '.'));
+    if (!isNaN(Number(v))) return true;
+    return !isNaN(n);
+  }
+
+  function inferirTipoColuna(nome, valores){
+    var nomeLower = nome.toLowerCase();
+    if (nomeLower.indexOf('data') > -1 || nomeLower.indexOf('date') > -1) return 'data';
+    var amostra = valores.filter(function(v){ return v !== '' && v !== null && v !== undefined; }).slice(0, 20);
+    if (amostra.length === 0) return 'texto';
+    var numericos = amostra.filter(pareceNumero).length;
+    if (numericos / amostra.length >= 0.7) return 'número';
+    return 'texto';
+  }
+
+  function pareceLancamentoAluguel(colunas){
+    var texto = colunas.join(' ').toLowerCase();
+    var temData = /data/.test(texto);
+    var temDescricao = /descri/.test(texto);
+    var temCategoria = /categoria/.test(texto);
+    var temTipo = /\btipo\b/.test(texto);
+    var temValor = /valor/.test(texto);
+    return temData && temDescricao && temCategoria && temTipo && temValor;
+  }
+
+  function wizardImportarComoLancamentos(){
+    var importados = 0, erros = 0;
+    var lancamentos = projetoAtual().lancamentos;
+    wizardRows.forEach(function(r){
+      var linha = {};
+      Object.keys(r).forEach(function(k){ linha[k.toLowerCase().trim()] = r[k]; });
+
+      var valor = parseFloat(String(linha['valor']).replace(',', '.'));
+      var tipoRaw = (linha['tipo'] || '').toString().toLowerCase();
+      var tipo = tipoRaw.indexOf('sa') === 0 ? 'saida' : 'entrada';
+      var descricao = linha['descrição'] || linha['descricao'];
+
+      if (!descricao || isNaN(valor)){ erros++; return; }
+      lancamentos.push({
+        data: linha['data'] ? String(linha['data']) : new Date().toISOString().slice(0,10),
+        descricao: descricao,
+        categoria: linha['categoria'] || 'Sem categoria',
+        tipo: tipo,
+        valor: valor,
+        status: 'pago'
+      });
+      importados++;
+    });
+
+    renderTudo();
+    renderHome();
+    wizardReiniciar();
+    mostrarTela('relatorios');
+    alert(importados + ' lançamento(s) importado(s) pra "' + projetoAtual().nome + '"' + (erros ? ', ' + erros + ' ignorado(s) por falta de dado.' : '.'));
+  }
+
+  function chutarNegocio(colunas){
+    var texto = colunas.join(' ').toLowerCase();
+    if (/valor|preço|preco|total|venda|receita|custo/.test(texto)) return 'Controle financeiro';
+    if (/estoque|produto|quantidade|sku/.test(texto)) return 'Controle de estoque';
+    if (/aluguel|inquilino|imovel|imóvel/.test(texto)) return 'Controle de aluguel';
+    if (/cliente|contato|telefone|email/.test(texto)) return 'Lista de clientes';
+    return 'Seus dados importados';
+  }
+
+  function wizardParse(ev){
+    var file = ev.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = new Uint8Array(e.target.result);
+        var wb = XLSX.read(data, {type:'array'});
+        var sheet = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+        if (rows.length === 0){ alert('Planilha vazia ou não reconhecida.'); return; }
+
+        wizardRows = rows;
+        var colunas = Object.keys(rows[0]);
+        wizardColunasInfo = colunas.map(function(c){
+          var valores = rows.map(function(r){ return r[c]; });
+          return { nome:c, tipo: inferirTipoColuna(c, valores), exemplo: valores.filter(function(v){return v!=='';})[0] || '' };
+        });
+
+        var tbody = document.getElementById('wizard-colunas');
+        tbody.innerHTML = wizardColunasInfo.map(function(c){
+          return '<tr><td>' + c.nome + '</td><td><span class="chip">' + c.tipo + '</span></td><td>' + c.exemplo + '</td></tr>';
+        }).join('');
+
+        document.getElementById('wizard-negocio').value = chutarNegocio(colunas);
+        document.getElementById('wizard-atalho-lancamentos').hidden = !pareceLancamentoAluguel(colunas);
+        document.getElementById('wizard-step-0').hidden = true;
+        document.getElementById('wizard-step-1').hidden = false;
+      }catch(err){
+        alert('Não consegui ler esse arquivo. Confira se é um .xlsx válido.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function wizardConfirmarEstrutura(){
+    document.getElementById('wizard-step-1').hidden = true;
+    document.getElementById('wizard-step-2').hidden = false;
+  }
+
+  function wizardAjustar(){
+    document.getElementById('wizard-step-3').hidden = true;
+    document.getElementById('wizard-step-2').hidden = false;
+  }
+
+  function wizardGerar(){
+    var numericas = wizardColunasInfo.filter(function(c){ return c.tipo === 'número'; });
+    var textos = wizardColunasInfo.filter(function(c){ return c.tipo === 'texto'; });
+
+    // se o pedido mencionar o nome de uma coluna, prioriza ela em vez do
+    // primeiro texto/número encontrado — assim "ajustar pedido" muda o resultado de verdade
+    var pedido = (document.getElementById('wizard-prompt').value || '').toLowerCase();
+    var textoMencionado = textos.find(function(c){ return pedido.indexOf(c.nome.toLowerCase()) > -1; });
+    var numMencionado = numericas.find(function(c){ return pedido.indexOf(c.nome.toLowerCase()) > -1; });
+    if (textoMencionado){ textos = [textoMencionado].concat(textos.filter(function(c){return c!==textoMencionado;})); }
+    if (numMencionado){ numericas = [numMencionado].concat(numericas.filter(function(c){return c!==numMencionado;})); }
+
+    // KPIs: soma de cada coluna numérica
+    var kpisEl = document.getElementById('wizard-kpis');
+    kpisEl.innerHTML = numericas.slice(0,4).map(function(c){
+      var soma = wizardRows.reduce(function(s,r){ var n = Number(String(r[c.nome]).replace(',','.')); return s + (isNaN(n)?0:n); }, 0);
+      var pareceMoeda = /valor|preço|preco|total|venda|receita|custo/i.test(c.nome);
+      var val = pareceMoeda ? fmtBRL(soma) : soma.toLocaleString('pt-BR');
+      return '<div class="kpi"><div class="lab">Soma de ' + c.nome + '</div><div class="val tabular">' + val + '</div></div>';
+    }).join('') || '<div class="kpi"><div class="lab">Linhas importadas</div><div class="val tabular">' + wizardRows.length + '</div></div>';
+
+    // gráfico: agrupa pela primeira coluna de texto, somando a primeira numérica
+    var catTitle = document.getElementById('wizard-chart-title');
+    var catEl = document.getElementById('wizard-catbar');
+    if (textos.length > 0 && numericas.length > 0){
+      var colCat = textos[0].nome, colNum = numericas[0].nome;
+      catTitle.textContent = colNum + ' por ' + colCat;
+      var grupos = {};
+      wizardRows.forEach(function(r){
+        var chave = r[colCat] || '(vazio)';
+        var n = Number(String(r[colNum]).replace(',','.'));
+        grupos[chave] = (grupos[chave] || 0) + (isNaN(n)?0:n);
+      });
+      var max = Math.max.apply(null, Object.keys(grupos).map(function(k){return grupos[k];}).concat([1]));
+      catEl.innerHTML = Object.keys(grupos).slice(0,10).map(function(k){
+        var pct = Math.round(grupos[k] / max * 100);
+        return '<div class="catbar-row"><span>' + k + '</span>' +
+          '<span class="catbar-track"><span class="catbar-fill" style="width:' + pct + '%"></span></span>' +
+          '<span class="tabular" style="text-align:right">' + grupos[k].toLocaleString('pt-BR') + '</span></div>';
+      }).join('');
+    } else {
+      catTitle.textContent = 'Sem coluna numérica + categórica pra agrupar';
+      catEl.innerHTML = '<div class="wizard-example">Essa planilha não tem uma combinação óbvia de categoria + número — no fluxo real, o Claude decidiria o melhor gráfico olhando os dados de verdade.</div>';
+    }
+
+    // tabela completa (limitada a 50 linhas na tela)
+    var colunas = wizardColunasInfo.map(function(c){ return c.nome; });
+    document.getElementById('wizard-thead').innerHTML = '<tr>' + colunas.map(function(c){ return '<th>'+c+'</th>'; }).join('') + '</tr>';
+    var linhasMostradas = wizardRows.slice(0, 50);
+    document.getElementById('wizard-tbody').innerHTML = linhasMostradas.map(function(r){
+      return '<tr>' + colunas.map(function(c){ return '<td>' + r[c] + '</td>'; }).join('') + '</tr>';
+    }).join('');
+    document.getElementById('wizard-truncado').textContent = wizardRows.length > 50
+      ? 'Mostrando 50 de ' + wizardRows.length + ' linhas.' : '';
+
+    document.getElementById('wizard-step-2').hidden = true;
+    document.getElementById('wizard-step-3').hidden = false;
+  }
+
+  function wizardConfirmar(){
+    var p = projetoAtual();
+    p.versao++;
+    p.publicado = true;
+    atualizarSidebarPill();
+    renderHome();
+    document.getElementById('wizard-confirmado-path').textContent = '/apps/' + p.slug + '/versions/v' + p.versao;
+    document.getElementById('wizard-confirmado').hidden = false;
+  }
+
+  function wizardReiniciar(){
+    wizardRows = [];
+    wizardColunasInfo = [];
+    document.getElementById('wizard-input').value = '';
+    document.getElementById('wizard-prompt').value = '';
+    document.getElementById('wizard-confirmado').hidden = true;
+    document.getElementById('wizard-step-3').hidden = true;
+    document.getElementById('wizard-step-0').hidden = false;
+  }
+</script>
+</body>
+</html>

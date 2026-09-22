@@ -7,6 +7,7 @@ import NovoLancamentoOpcional from "@/components/NovoLancamentoOpcional";
 import RelatorioFinanceiro from "@/components/RelatorioFinanceiro";
 import RelatorioGenericoView from "@/components/RelatorioGenericoView";
 import PainelIA from "@/components/ia/PainelIA";
+import { FileText, RefreshCw } from "lucide-react";
 
 export default async function PaginaRelatorio({
   params,
@@ -26,12 +27,16 @@ export default async function PaginaRelatorio({
 
   return (
     <div className="mx-auto w-full max-w-6xl p-6">
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-bold">Relatórios</h1>
           <p className="text-sm text-text-muted">{projeto.nome}</p>
         </div>
-        <NovoLancamentoOpcional projetoId={projeto.id} projetoSlug={projeto.slug} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Link href={`/relatorios/${projeto.slug}/importar`} className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text hover:bg-surface-2"><RefreshCw size={16} /> Atualizar dados</Link>
+          <Link href={`/relatorios/${projeto.slug}/resumo`} className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text hover:bg-surface-2"><FileText size={16} /> Gerar resumo</Link>
+          <NovoLancamentoOpcional projetoId={projeto.id} projetoSlug={projeto.slug} />
+        </div>
       </header>
 
       <PainelIA

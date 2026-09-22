@@ -6,6 +6,8 @@ import Link from "next/link";
 import * as XLSX from "xlsx";
 import { useAviso } from "@/components/aviso/AvisoProvider";
 import { analisarQualidade } from "@/lib/qualidadePlanilha";
+import type { RelatorioGenerico } from "@/lib/relatorioGenerico";
+import { carregarAIConfig } from "@/lib/widgets";
 import {
   detectarColunas,
   pareceLancamentoAluguel,
@@ -21,9 +23,13 @@ type Passo = 0 | 1 | 2 | 3;
 export default function WizardImportar({
   projetoSlug,
   projetoNome,
+  relatorioAtual,
+  projetoId,
 }: {
   projetoSlug: string;
   projetoNome: string;
+  relatorioAtual: RelatorioGenerico | null;
+  projetoId: number;
 }) {
   const router = useRouter();
   const { aviso } = useAviso();
@@ -35,10 +41,25 @@ export default function WizardImportar({
   const [colunas, setColunas] = useState<ColunaInfo[]>([]);
   const [negocio, setNegocio] = useState("");
   const [pedido, setPedido] = useState("");
+  const [modo, setModo] = useState<"substituir" | "acrescentar">("substituir");
 
   const ehLancamento = pareceLancamentoAluguel(colunas.map((c) => c.nome));
-  const previa = passo === 3 ? calcularPreviaGenerica(colunas, rows, pedido) : null;
+  const linhasFinais = modo === "acrescentar" && relatorioAtual ? [...relatorioAtual.linhas, ...rows] : rows;
+  const previa = passo === 3 ? calcularPreviaGenerica(colunas, linhasFinais, pedido) : null;
   const qualidade = rows.length ? analisarQualidade(colunas, rows) : [];
+  const nomesAtuais = relatorioAtual?.colunas.map((c) => c.nome) ?? [];
+  const nomesNovos = colunas.map((c) => c.nome);
+  const colunasIguais = nomesAtuais.length === nomesNovos.length && nomesAtuais.every((c) => nomesNovos.includes(c));
+  const colunasRemovidas = nomesAtuais.filter((c) => !nomesNovos.includes(c));
+  const [graficosAfetados, setGraficosAfetados] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!relatorioAtual || !colunas.length) return;
+    const afetados = (carregarAIConfig(projetoId).widgets ?? [])
+      .filter((w) => !nomesNovos.includes(w.groupBy) || (w.campo && !nomesNovos.includes(w.campo)))
+      .map((w) => w.title);
+    setGraficosAfetados(afetados);
+  }, [colunas, projetoId, relatorioAtual]);
 
   function diagnostico() {
     return <section className="mb-4 border-t border-border pt-4">
@@ -68,6 +89,7 @@ export default function WizardImportar({
       setRows(dados.rows);
       setColunas(dados.colunas);
       setNegocio(chutarNegocio(dados.colunas.map((c) => c.nome)));
+      setModo("substituir");
       setPasso(1);
     } catch {
       // planilha pendente corrompida/indisponível — usuário só recomeça do passo 0
@@ -94,6 +116,7 @@ export default function WizardImportar({
         setRows(parsed);
         setColunas(colunasDetectadas);
         setNegocio(chutarNegocio(colunasDetectadas.map((c) => c.nome)));
+        setModo("substituir");
         setPasso(1);
       } catch {
         aviso("Não consegui ler esse arquivo. Confira se é um .xlsx válido.", "error", "Arquivo inválido");
@@ -138,6 +161,7 @@ export default function WizardImportar({
           arquivoOriginal: arquivoNome,
           colunas: colunas.map((c) => ({ nome: c.nome, tipo: c.tipo })),
           linhas: rows,
+          modo,
         }),
       });
       const corpo = await resp.json().catch(() => ({}));
@@ -159,6 +183,7 @@ export default function WizardImportar({
       </Link>
       <h1 className="mb-1 mt-1 text-lg font-bold">Importar planilha</h1>
       <p className="mb-6 text-sm text-text-muted">{projetoNome}</p>
+      {relatorioAtual && <div className="mb-5 border-l-2 border-accent pl-3 text-sm text-text-muted">Planilha atual: {relatorioAtual.linhas.length} linhas. A nova importação criará outra versão do projeto.</div>}
 
       {passo === 0 && (
         <div className="rounded-xl border border-border bg-surface p-6 shadow-[var(--shadow-soft)]">
@@ -177,6 +202,16 @@ export default function WizardImportar({
       {passo === 1 && (
         <div className="rounded-xl border border-border bg-surface p-6 shadow-[var(--shadow-soft)]">
           <h3 className="mb-3 text-sm font-semibold">Colunas detectadas</h3>
+          {relatorioAtual && <fieldset className="mb-5 border-b border-border pb-5">
+            <legend className="mb-2 text-sm font-semibold">Como atualizar os dados?</legend>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <label className="flex items-center gap-2"><input type="radio" name="modo" checked={modo === "substituir"} onChange={() => setModo("substituir")} /> Substituir dados atuais</label>
+              <label className="flex items-center gap-2"><input type="radio" name="modo" checked={modo === "acrescentar"} onChange={() => setModo("acrescentar")} disabled={!colunasIguais} /> Acrescentar linhas</label>
+            </div>
+            <p className="mt-2 text-xs text-text-muted">{colunasIguais ? "Colunas compatíveis com a planilha atual." : `Colunas diferentes. Para acrescentar, use os mesmos nomes: ${nomesAtuais.join(", ")}.`}</p>
+            {colunasRemovidas.length > 0 && <p className="mt-2 text-xs text-pending">Colunas ausentes: {colunasRemovidas.join(", ")}. Gráficos que dependem delas podem parar de funcionar.</p>}
+            {graficosAfetados.length > 0 && <p className="mt-2 text-xs text-danger">Gráficos afetados neste navegador: {graficosAfetados.join(", ")}.</p>}
+          </fieldset>}
           {diagnostico()}
           <div className="mb-4 overflow-x-auto">
             <table className="w-full text-sm">
@@ -274,6 +309,7 @@ export default function WizardImportar({
 
       {passo === 3 && previa && (
         <div className="rounded-xl border border-border bg-surface p-6 shadow-[var(--shadow-soft)]">
+          <div className="mb-4 border-b border-border pb-3 text-sm"><strong>{modo === "acrescentar" ? "Acrescentar" : "Substituir"}</strong> · {relatorioAtual?.linhas.length ?? 0} linhas atuais · {rows.length} novas · {linhasFinais.length} no relatório após confirmar.</div>
           {diagnostico()}
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {previa.kpis.map((k) => (
@@ -324,7 +360,7 @@ export default function WizardImportar({
                 </tr>
               </thead>
               <tbody>
-                {rows.slice(0, 50).map((r, i) => (
+                {linhasFinais.slice(0, 50).map((r, i) => (
                   <tr key={i} className="border-b border-border last:border-0">
                     {colunas.map((c) => (
                       <td key={c.nome} className="py-2 pr-3">
@@ -335,8 +371,8 @@ export default function WizardImportar({
                 ))}
               </tbody>
             </table>
-            {rows.length > 50 && (
-              <p className="mt-2 text-xs text-text-faint">Mostrando 50 de {rows.length} linhas.</p>
+            {linhasFinais.length > 50 && (
+              <p className="mt-2 text-xs text-text-faint">Mostrando 50 de {linhasFinais.length} linhas.</p>
             )}
           </div>
 

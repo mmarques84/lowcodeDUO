@@ -84,7 +84,7 @@ export default function Sidebar({
                   : "text-text-muted hover:bg-surface-2 hover:text-text"
               }`}
             >
-              Importar planilha
+              Importar / atualizar
             </Link>
             <Link
               href={`/relatorios/${projetoAtual.slug}/versoes`}
@@ -105,6 +105,16 @@ export default function Sidebar({
               }`}
             >
               Alertas
+            </Link>
+            <Link
+              href={`/relatorios/${projetoAtual.slug}/resumo`}
+              className={`block rounded-lg px-3 py-2 text-sm font-medium transition ${
+                pathname === `/relatorios/${projetoAtual.slug}/resumo`
+                  ? "bg-accent-soft text-accent"
+                  : "text-text-muted hover:bg-surface-2 hover:text-text"
+              }`}
+            >
+              Resumo para PDF
             </Link>
           </>
         )}

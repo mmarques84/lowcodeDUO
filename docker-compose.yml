@@ -1,0 +1,22 @@
+# Não sobe n8n aqui — já existe o container n8n-local (com Postgres próprio)
+# rodando fora deste compose. Os workflows conectam neste MySQL de dentro
+# do container do n8n-local usando host.docker.internal:3306 (Docker Desktop
+# resolve isso pro host) em vez de um hostname de rede compartilhada.
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: aluguel_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: lowcodeduo
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: "123456"
+    ports:
+      - "3306:3306"          # em produção na VPS: tirar essa porta, só n8n acessa via rede interna
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+volumes:
+  mysql_data:

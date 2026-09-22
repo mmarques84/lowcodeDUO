@@ -1,0 +1,2060 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel — lowcodeDUO</title>
+<style>
+  :root{
+    --bg:#F2F4F9;
+    --surface:#FFFFFF;
+    --surface-2:#EAEDF4;
+    --surface-3:#E1E5EF;
+    --border:#DBE0EA;
+    --text:#12151C;
+    --text-muted:#5B6273;
+    --text-faint:#8B93A6;
+    --accent:#2B59C3;
+    --accent-soft:#E4EAFB;
+    --live:#187A4C;
+    --live-soft:#E1F3E9;
+    --pending:#A6690A;
+    --pending-soft:#FBEEDA;
+    --danger:#B33A22;
+    --danger-soft:#FAE7E1;
+    --radius-lg:16px; --radius-md:10px; --radius-sm:7px;
+    --shadow:0 1px 2px rgba(18,21,28,.05), 0 8px 24px rgba(18,21,28,.07);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+  }
+  .mono{ font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+  .tabular{ font-variant-numeric: tabular-nums; }
+  button{ font-family:inherit; }
+  input, select{ font-family:inherit; }
+
+  [hidden]{ display:none !important; }
+
+  .banner{
+    background:var(--pending-soft);
+    color:var(--pending);
+    text-align:center;
+    font-size:12.5px;
+    padding:8px 14px;
+    border-bottom:1px solid var(--border);
+  }
+
+  /* ---------- login ---------- */
+  #view-login{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+    background: radial-gradient(600px 260px at 50% -10%, var(--accent-soft), transparent);
+  }
+  .login-card{
+    width:100%; max-width:340px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:30px 26px 26px;
+    box-shadow:var(--shadow);
+  }
+  .brandmark{ display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+  .brandmark .glyph{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--accent); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700; font-size:14px; flex:none;
+  }
+  .brandmark .name{ font-weight:600; font-size:15px; }
+  .brandmark .placeholder{ font-size:10.5px; color:var(--text-faint); }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; }
+  .field input, .field select, .field textarea{
+    width:100%; border:1px solid var(--border); background:var(--surface-2);
+    border-radius:var(--radius-sm); padding:10px 12px; font-size:13.5px; color:var(--text);
+    font-family:inherit; resize:vertical;
+  }
+  .wizard-steps{ display:flex; flex-direction:column; gap:14px; }
+  .wizard-hint{ font-size:12.5px; color:var(--text-muted); margin:0 0 10px; }
+  .wizard-example{ font-size:11px; color:var(--text-faint); margin-top:4px; }
+  .btn{
+    appearance:none; border:none; border-radius:var(--radius-sm);
+    padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer;
+  }
+  .btn-primary{ background:var(--accent); color:#fff; width:100%; margin-top:4px; }
+  .btn-ghost{ background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
+  .btn-sm{ padding:7px 10px; font-size:12.5px; }
+  .login-foot{ text-align:center; margin-top:14px; font-size:12px; color:var(--text-faint); }
+
+  /* ---------- modal estilo Swal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:50;
+    background:rgba(18,21,28,.38);
+    display:flex; align-items:center; justify-content:center;
+    padding:18px;
+  }
+  .modal-card{
+    width:100%; max-width:460px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:0 18px 60px rgba(18,21,28,.22);
+    padding:34px 32px 28px;
+    text-align:center;
+    font-size:16px;
+  }
+  .modal-icon{
+    width:64px; height:64px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 16px;
+    font-size:34px; font-weight:700;
+  }
+  .modal-icon.error{ color:var(--danger); background:var(--danger-soft); }
+  .modal-icon.success{ color:var(--live); background:var(--live-soft); }
+  .modal-icon.info{ color:var(--accent); background:var(--accent-soft); }
+  .modal-card h3{ margin:0 0 10px; font-size:22px; line-height:1.25; }
+  .modal-card p{ margin:0 0 22px; color:var(--text-muted); font-size:15px; line-height:1.5; }
+  .modal-card .btn{ font-size:15px; padding:11px 18px; min-width:120px; }
+
+  /* ---------- shell ---------- */
+  #view-app{ display:flex; min-height:100vh; }
+  .sidebar{
+    width:220px; flex:none;
+    border-right:1px solid var(--border);
+    background:var(--surface-2);
+    padding:16px 14px;
+    display:flex; flex-direction:column; gap:18px;
+  }
+  .switcher{
+    display:block; width:100%;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:8px 10px; font-size:12.5px; font-weight:600;
+    color:var(--text); cursor:pointer;
+  }
+  nav.navlist{ display:flex; flex-direction:column; gap:2px; }
+  nav.navlist button{
+    all:unset; cursor:pointer;
+    display:flex; align-items:center; gap:9px;
+    padding:8px 9px; border-radius:var(--radius-sm);
+    font-size:13px; font-weight:500; color:var(--text-muted);
+  }
+  nav.navlist button.active{ background:var(--surface); color:var(--text); box-shadow:0 0 0 1px var(--border); }
+
+  .publish-widget{
+    margin-top:auto; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:12px; display:flex; flex-direction:column; gap:9px;
+  }
+  .vrow{ display:flex; align-items:center; justify-content:space-between; font-size:12.5px; }
+  .vrow .lab{ color:var(--text-muted); }
+  .pill{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px;
+    font-size:11px; font-weight:600;
+  }
+  .pill .d{ width:6px;height:6px;border-radius:50%; }
+  .pill.pending{ background:var(--pending-soft); color:var(--pending); }
+  .pill.pending .d{ background:var(--pending); }
+  .pill.live{ background:var(--live-soft); color:var(--live); }
+  .pill.live .d{ background:var(--live); }
+  .widget-note{ font-size:11px; color:var(--text-faint); }
+
+  .main{ flex:1; min-width:0; padding:22px 24px 40px; overflow-x:hidden; }
+  .main-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .main-head h2{ font-size:19px; margin:0; font-weight:700; }
+  .main-head .sub{ font-size:12.5px; color:var(--text-faint); }
+
+  .greet{ font-size:19px; font-weight:700; margin-bottom:2px; }
+  .greet-sub{ color:var(--text-muted); font-size:13px; margin-bottom:20px; }
+  .proj-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+  .proj-card{
+    border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md);
+    padding:16px; display:flex; flex-direction:column; gap:8px; text-align:left; cursor:pointer;
+    position:relative;
+  }
+  .proj-card .proj-remove{ position:absolute; top:8px; right:8px; }
+  .proj-card .pname{ font-weight:600; font-size:14px; }
+  .proj-card .ptype{ font-size:11.5px; color:var(--text-faint); }
+  .proj-card .pbal{ font-size:21px; font-weight:700; }
+
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+  .kpi{ border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md); padding:14px 16px; }
+  .kpi .lab{ font-size:11.5px; color:var(--text-muted); margin-bottom:6px; }
+  .kpi .val{ font-size:22px; font-weight:700; }
+  .kpi.entrada .val{ color:var(--live); }
+  .kpi.saida .val{ color:var(--danger); }
+
+  .panel{ border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md); padding:16px; margin-bottom:16px; }
+  .panel h3{ font-size:11px; margin:0 0 14px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+
+  .catbar{ display:flex; flex-direction:column; gap:10px; }
+  .catbar-row{ display:grid; grid-template-columns:110px 1fr 90px; align-items:center; gap:10px; font-size:12.5px; }
+  .catbar-track{ height:9px; background:var(--surface-2); border-radius:5px; overflow:hidden; }
+  .catbar-fill{ height:100%; background:var(--accent); border-radius:5px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); font-weight:600; padding:0 10px 8px; border-bottom:1px solid var(--border); }
+  td{ padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:last-child td{ border-bottom:none; }
+  td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .chip{ display:inline-block; background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted); font-size:11px; padding:3px 8px; border-radius:999px; }
+  .typ{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; }
+  .typ .d{ width:7px;height:7px;border-radius:50%; flex:none; }
+  .typ.entrada .d{ background:var(--live); } .typ.entrada{ color:var(--live); }
+  .typ.saida .d{ background:var(--danger); } .typ.saida{ color:var(--danger); }
+  .table-scroll{ overflow-x:auto; }
+
+  .add-form{ display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-bottom:16px; }
+  .add-form .f{ display:flex; flex-direction:column; gap:4px; }
+  .add-form label{ font-size:11px; color:var(--text-muted); font-weight:600; }
+  .add-form input, .add-form select{
+    border:1px solid var(--border); background:var(--surface-2); border-radius:var(--radius-sm);
+    padding:8px 10px; font-size:12.5px; color:var(--text);
+  }
+  .add-form input[type=text].descricao{ width:180px; }
+  .add-form input[type=number]{ width:110px; }
+
+  .layout-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:18px; }
+  .swatches{ display:flex; gap:8px; margin-top:6px; }
+  .swatch{ width:26px;height:26px;border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--border); cursor:pointer; }
+  .swatch.selected{ box-shadow:0 0 0 2px var(--accent); }
+  .preview-box{ border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg); padding:16px; }
+  .preview-box .pv-label{ font-size:11px; color:var(--text-faint); margin-bottom:10px; }
+  .mini-card{ background:var(--surface); border-radius:var(--radius-sm); border:1px solid var(--border); padding:16px; max-width:220px; margin:0 auto; }
+  .mini-card .mglyph{ width:20px;height:20px;border-radius:6px; margin-bottom:10px; background:var(--accent); }
+  .mini-card .mtitle{ font-size:12px; font-weight:600; margin-bottom:10px; }
+  .mini-card .mfield{ height:9px; background:var(--surface-2); border-radius:4px; margin-bottom:6px; }
+  .mini-card .mbtn{ height:24px; border-radius:6px; margin-top:8px; background:var(--accent); }
+  .note-box{ background:var(--accent-soft); border:1px solid var(--border); border-radius:var(--radius-md); padding:13px 14px; font-size:12.5px; display:flex; gap:10px; margin-top:14px; }
+
+  .dropzone{ border:1.5px dashed var(--border); border-radius:var(--radius-md); padding:28px 20px; text-align:center; margin-bottom:18px; }
+  .dropzone .dztitle{ font-weight:600; font-size:13.5px; margin-bottom:4px; }
+  .dropzone .dzsub{ font-size:12px; color:var(--text-faint); margin-bottom:14px; }
+  .ai-request{ display:grid; grid-template-columns:minmax(260px,1fr) 260px; gap:16px; align-items:start; }
+  .ia-flutuante .ai-request{ grid-template-columns:1fr; }
+  .ai-side{ border:1px solid var(--border); background:var(--bg); border-radius:var(--radius-md); padding:14px; }
+  .ai-side .title{ font-size:12px; font-weight:700; margin-bottom:8px; }
+  .ai-side ul{ margin:0; padding-left:18px; color:var(--text-muted); font-size:12.5px; }
+  .ai-draft-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  .ai-draft-card{ border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md); padding:14px; cursor:pointer; user-select:none; transition:opacity .15s, border-color .15s; }
+  .ai-draft-card .kind{ font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+  .ai-draft-card .name{ font-weight:700; margin-bottom:4px; }
+  .ai-draft-card .desc{ color:var(--text-muted); font-size:12.5px; }
+  .ai-draft-card:hover{ border-color:var(--accent); }
+  .ai-draft-card .card-check{
+    display:inline-block; font-size:11px; font-weight:600; margin-top:10px;
+    padding:3px 9px; border-radius:999px;
+  }
+  .ai-draft-card.selecionado{ border-color:var(--live); }
+  .ai-draft-card.selecionado .card-check{ color:var(--live); background:var(--live-soft); }
+  .ai-draft-card.descartado{ opacity:.55; }
+  .ai-draft-card.descartado .card-check{ color:var(--text-faint); background:var(--surface-2); }
+  .ai-preview-box{ border:1px dashed var(--border); border-radius:var(--radius-md); padding:14px; background:var(--bg); }
+  .widget-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
+  .widget-card{ border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-md); padding:14px; transition:border-color .15s; }
+  .widget-card:hover{ border-color:var(--text-faint); }
+  .widget-card h3{ margin:0 0 12px; }
+  .widget-card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .btn-icon-ghost{ border:none; background:none; color:var(--text-faint); cursor:pointer; font-size:14px; line-height:1; padding:2px 4px; border-radius:4px; transition:background .15s, color .15s; }
+  .btn-icon-ghost:hover{ background:var(--surface-3); color:var(--text); }
+  .ia-fab{
+    position:fixed; right:24px; bottom:24px; z-index:40;
+    width:56px; height:56px; border-radius:50%; border:none;
+    background:var(--accent); color:#fff; font-size:24px; cursor:pointer;
+    box-shadow:0 10px 28px rgba(18,21,28,.28);
+    transition:transform .15s, box-shadow .15s, filter .15s;
+  }
+  .ia-fab:hover{ filter:brightness(1.08); transform:translateY(-2px); box-shadow:0 14px 32px rgba(18,21,28,.32); }
+  .ia-fab:active{ transform:translateY(0); }
+  .ia-flutuante-backdrop{ position:fixed; inset:0; z-index:39; background:rgba(18,21,28,.35); }
+  .ia-flutuante{
+    position:fixed; right:24px; bottom:92px; z-index:40;
+    width:640px; max-width:calc(100vw - 32px); max-height:80vh; overflow-y:auto; overflow-x:hidden;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    box-shadow:0 18px 60px rgba(18,21,28,.22); padding:22px; font-size:15px;
+  }
+  .ia-flutuante .donut-wrap{ grid-template-columns:1fr; }
+  .ia-flutuante .catbar-row{ grid-template-columns:96px 1fr 92px; gap:10px; font-size:13px; }
+  .ia-flutuante-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .ia-flutuante-head h3{ margin:0; font-size:13px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+  .ia-flutuante .field label{ font-size:13.5px; }
+  .ia-flutuante .field textarea{ font-size:15px; padding:12px 14px; }
+  .ia-flutuante .ai-side .title{ font-size:13.5px; }
+  .ia-flutuante .ai-side ul{ font-size:14px; }
+  .ia-flutuante .ai-draft-card .kind{ font-size:12px; }
+  .ia-flutuante .ai-draft-card .name{ font-size:16px; }
+  .ia-flutuante .ai-draft-card .desc{ font-size:13.5px; }
+  .ia-flutuante .ai-draft-card .card-check{ font-size:12.5px; }
+  .ia-flutuante .wizard-example{ font-size:12.5px; }
+  .ia-flutuante .note-box{ font-size:13.5px; }
+  .ia-flutuante .btn{ font-size:14.5px; }
+  .donut-wrap{ display:grid; grid-template-columns:150px minmax(180px,1fr); gap:18px; align-items:center; }
+  .donut{
+    width:142px; height:142px; border-radius:50%;
+    background:conic-gradient(var(--surface-3) 0 100%);
+    position:relative; box-shadow:inset 0 0 0 1px var(--border);
+  }
+  .donut:after{
+    content:""; position:absolute; inset:34px; border-radius:50%;
+    background:var(--surface); border:1px solid var(--border);
+  }
+  .legend{ display:flex; flex-direction:column; gap:8px; }
+  .legend-row{ display:grid; grid-template-columns:12px 1fr auto; gap:8px; align-items:center; font-size:12.5px; }
+  .legend-dot{ width:10px; height:10px; border-radius:50%; }
+
+  @media (max-width: 720px){
+    #view-app{ flex-direction:column; }
+    .sidebar{ width:100%; flex-direction:row; flex-wrap:wrap; border-right:none; border-bottom:1px solid var(--border); }
+    .switcher{ flex:1 1 100%; }
+    nav.navlist{ flex-direction:row; flex:1 1 100%; overflow-x:auto; }
+    .publish-widget{ margin-top:0; flex:1 1 220px; }
+    .layout-grid{ grid-template-columns:1fr; }
+    .ai-request{ grid-template-columns:1fr; }
+    .donut-wrap{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Conectado ao MySQL via n8n (<span class="mono">localhost:5678</span>) — o n8n precisa estar rodando pra este painel funcionar</div>
+
+<!-- ================= LOGIN ================= -->
+<div id="view-login">
+  <div class="login-card">
+    <div class="brandmark">
+      <div class="glyph">▲</div>
+      <div>
+        <div class="name">nome da marca</div>
+        <div class="placeholder">(espaço reservado pro seu logo)</div>
+      </div>
+    </div>
+    <div class="field"><label>E-mail</label><input id="login-email" type="text" value="marcus@lowcodeduo.com"></div>
+    <div class="field"><label>Senha</label><input id="login-pass" type="password" value="123456"></div>
+    <button class="btn btn-primary" onclick="entrar()">Entrar</button>
+    <div class="login-foot">Login real via n8n — usuário de exemplo já pré-preenchido (senha: 123456).</div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="view-app" hidden>
+  <div class="sidebar">
+    <select class="switcher" id="projeto-switcher" onchange="trocarProjeto(this.value)"></select>
+    <nav class="navlist">
+      <button data-screen="home" class="active" onclick="mostrarTela('home')">Início</button>
+      <button data-screen="relatorios" onclick="mostrarTela('relatorios')">Relatórios</button>
+      <button data-screen="layout" onclick="mostrarTela('layout')">Editar layout</button>
+      <button data-screen="excel" onclick="mostrarTela('excel')">Importar Excel</button>
+    </nav>
+    <div class="publish-widget">
+      <div class="vrow"><span class="lab">Versão</span><span class="pill pending" id="version-pill"><span class="d"></span>v1 local</span></div>
+      <div class="widget-note" id="version-note">Ainda não publicada — isso acontece quando ligarmos o fluxo de Git/VPS.</div>
+      <button class="btn btn-ghost btn-sm" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- HOME -->
+    <section data-screen="home">
+      <div class="greet" id="home-greet">Olá</div>
+      <div class="greet-sub">Seus projetos</div>
+      <div class="proj-grid" id="home-proj-grid"></div>
+
+      <div class="panel" id="novo-projeto-panel" hidden style="margin-top:16px;">
+        <h3>Criar novo projeto</h3>
+        <div class="add-form">
+          <div class="f"><label>Nome</label><input type="text" id="np-nome" placeholder="ex: Restaurante Sabor Bom"></div>
+          <div class="f"><label>Tipo</label><input type="text" id="np-tipo" placeholder="ex: Financeiro"></div>
+          <div class="f"><label>Cor</label><input type="color" id="np-cor" value="#2B59C3"></div>
+          <div class="f"><label>Planilha (opcional)</label><input type="file" id="np-arquivo" accept=".xlsx,.xls"></div>
+          <button class="btn btn-primary btn-sm" onclick="criarProjeto()">Criar projeto</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('novo-projeto-panel').hidden = true;">Cancelar</button>
+        </div>
+        <div class="wizard-example">Se enviar uma planilha, o projeto já nasce com os dados importados — sem planilha, ele nasce vazio.</div>
+      </div>
+    </section>
+
+    <!-- RELATORIOS -->
+    <section data-screen="relatorios" hidden>
+      <div class="main-head"><div><h2>Relatórios</h2><div class="sub" id="main-relatorios-sub"></div></div></div>
+
+      <div id="relatorio-financeiro">
+      <div class="kpis">
+        <div class="kpi entrada"><div class="lab">Entradas</div><div class="val tabular" id="kpi-entradas">R$ 0,00</div></div>
+        <div class="kpi saida"><div class="lab">Saídas</div><div class="val tabular" id="kpi-saidas">R$ 0,00</div></div>
+        <div class="kpi"><div class="lab">Saldo</div><div class="val tabular" id="kpi-saldo">R$ 0,00</div></div>
+      </div>
+
+      <div class="panel" id="ai-dashboard-panel" hidden>
+        <h3 id="ai-dashboard-title">Dashboard aplicado</h3>
+        <div class="catbar" id="ai-dashboard-chart"></div>
+      </div>
+
+      <div class="panel" id="ai-controls-panel" hidden>
+        <h3>Controles inteligentes</h3>
+        <div class="add-form" style="margin-bottom:0;">
+          <div class="f" id="ai-month-filter-wrap" hidden>
+            <label>Filtrar por mês</label>
+            <select id="ai-month-filter" onchange="renderTudo()"></select>
+          </div>
+          <div class="f" id="ai-column-toggle-wrap" hidden style="min-width:320px;">
+            <label>Colunas da tabela</label>
+            <div id="ai-column-toggles" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Novo lançamento</h3>
+        <div class="add-form">
+          <div class="f"><label>Data</label><input type="date" id="f-data"></div>
+          <div class="f"><label>Descrição</label><input type="text" class="descricao" id="f-desc" placeholder="ex: Aluguel recebido"></div>
+          <div class="f"><label>Categoria</label><input type="text" id="f-cat" list="cat-list" placeholder="ex: Aluguel"></div>
+          <datalist id="cat-list"></datalist>
+          <div class="f"><label>Tipo</label>
+            <select id="f-tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+          </div>
+          <div class="f"><label>Valor (R$)</label><input type="number" step="0.01" id="f-valor" placeholder="0,00"></div>
+          <div class="f"><label>Status</label>
+            <select id="f-status"><option value="pendente">Pendente</option><option value="pago">Pago</option></select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="adicionarLancamento()">Adicionar</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Lançamentos</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+            <tbody id="tbody-lancamentos"></tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+
+      <button class="ia-fab" id="ia-fab" onclick="alternarAssistenteIA()" title="Modificar este relatório com IA">💬</button>
+
+      <div class="ia-flutuante-backdrop" id="ia-flutuante-backdrop" hidden onclick="alternarAssistenteIA()"></div>
+
+      <div class="ia-flutuante" id="ia-assistente-flutuante" hidden>
+        <div class="ia-flutuante-head">
+          <h3>Modificar este relatório com IA</h3>
+          <button class="btn-icon-ghost" onclick="alternarAssistenteIA()" title="Fechar">✕</button>
+        </div>
+        <div id="ia-generico-aviso" class="wizard-example" hidden>Esse relatório não é do formato de lançamentos, mas a IA já entende as colunas da sua planilha — pode pedir gráficos usando os nomes reais delas.</div>
+        <div id="ia-request-wrap">
+        <div class="ai-request">
+          <div>
+            <div class="field">
+              <label>O que você quer mudar neste relatório?</label>
+              <textarea id="ia-pedido" rows="4" placeholder="ex: quero um gráfico de valores recebidos por mês e deixar o status pago/pendente mais fácil de alterar"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="gerarRascunhoIA()">Gerar rascunho</button>
+          </div>
+          <div class="ai-side">
+            <div class="title">Como funciona</div>
+            <ul>
+              <li>Gera uma proposta de mudança</li>
+              <li>Mostra uma prévia antes de publicar</li>
+              <li>Só aplica quando você aprova</li>
+            </ul>
+          </div>
+        </div>
+
+      <div class="panel" id="ia-rascunho" hidden>
+        <h3>Rascunho da próxima versão</h3>
+        <div class="ai-draft-grid" id="ia-rascunho-cards"></div>
+        <div class="note-box">
+          <span>i</span>
+          <span>Este rascunho será publicado como uma nova versão do projeto quando você aprovar.</span>
+        </div>
+        <div class="ai-preview-box" style="margin-top:14px;">
+          <h3 style="margin-top:0;">Prévia</h3>
+          <div id="ia-preview"></div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;">
+          <button class="btn btn-primary btn-sm" style="background:var(--live);" onclick="aprovarRascunhoIA()">Aprovar e publicar versão</button>
+          <button class="btn btn-ghost btn-sm" onclick="ajustarRascunhoIA()">Ajustar pedido</button>
+          <button class="btn btn-ghost btn-sm" onclick="descartarRascunhoIA()">Descartar</button>
+        </div>
+      </div>
+      </div>
+      </div>
+
+      <div id="relatorio-generico-panel" hidden>
+        <div class="kpis" id="rg-kpis"></div>
+        <div class="panel" id="rg-dashboard-panel">
+          <h3>Dashboard aplicado</h3>
+          <div id="rg-widgets"></div>
+        </div>
+        <div class="panel">
+          <h3>Dados importados</h3>
+          <div class="table-scroll">
+            <table>
+              <thead id="rg-thead"></thead>
+              <tbody id="rg-tbody"></tbody>
+            </table>
+          </div>
+          <div class="wizard-example" id="rg-truncado"></div>
+        </div>
+        <div class="note-box">
+          <span>i</span>
+          <span>Esse projeto veio de uma planilha que não é do formato de lançamentos — pra importar uma nova versão, use "Importar Excel".</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- EDITAR LAYOUT -->
+    <section data-screen="layout" hidden>
+      <div class="main-head"><div><h2>Editar layout</h2><div class="sub">Ajustes visuais — aplicam na hora</div></div></div>
+      <div class="layout-grid">
+        <div>
+          <div class="field"><label>Nome do sistema</label><input type="text" id="cfg-nome"></div>
+          <div class="field">
+            <label>Cor primária</label>
+            <div class="swatches">
+              <div class="swatch" style="background:#2B59C3" onclick="setCor('#2B59C3', this)"></div>
+              <div class="swatch" style="background:#187A4C" onclick="setCor('#187A4C', this)"></div>
+              <div class="swatch" style="background:#A6690A" onclick="setCor('#A6690A', this)"></div>
+              <div class="swatch" style="background:#B33A22" onclick="setCor('#B33A22', this)"></div>
+              <div class="swatch" style="background:#5B6273" onclick="setCor('#5B6273', this)"></div>
+            </div>
+          </div>
+          <div class="field"><label>Texto de boas-vindas</label><input type="text" id="cfg-texto"></div>
+          <button class="btn btn-primary" onclick="salvarLayout()">Salvar alterações</button>
+          <div class="note-box" style="margin-top:14px;">
+            <span>🔗</span>
+            <span>Cada projeto publica no próprio endereço, nomeado a partir do nome dele: <span class="mono" id="cfg-slug-preview">/apps/aluguel-ape-rua-x/</span>. Mudar o nome do projeto muda esse endereço.</span>
+          </div>
+        </div>
+        <div>
+          <div class="preview-box">
+            <div class="pv-label">pré-visualização</div>
+            <div class="mini-card">
+              <div class="mglyph" id="pv-glyph"></div>
+              <div class="mtitle" id="pv-titulo"></div>
+              <div class="mfield" style="width:100%"></div>
+              <div class="mfield" style="width:70%"></div>
+              <div class="mbtn" id="pv-btn"></div>
+            </div>
+          </div>
+          <div class="note-box">
+            <span>🛈</span>
+            <span>Mudança estrutural (nova seção, campo novo)? Isso não é ajuste de layout — isso vira um pedido pra IA, gerando uma versão nova pra revisar antes de publicar.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPORTAR EXCEL -->
+    <section data-screen="excel" hidden>
+      <div class="main-head"><div><h2>Importar Excel</h2><div class="sub" id="main-excel-sub"></div></div></div>
+      <div class="panel" style="margin-bottom:0;">
+        <h3>Importar Excel</h3>
+        <p class="wizard-hint">Um único fluxo pra qualquer planilha: suba o arquivo, o sistema lê as colunas, confirma com você do que se trata, e monta um relatório adaptado — ou, se reconhecer o formato de lançamentos, oferece importar direto pra lista do projeto selecionado acima.</p>
+
+        <div class="wizard-steps">
+          <div id="wizard-step-0">
+            <div class="dropzone" style="margin-bottom:0;">
+              <div class="dztitle">Selecione sua planilha .xlsx</div>
+              <div class="dzsub">Qualquer estrutura de colunas — controle de estoque, vendas, lista de clientes, lançamentos, etc.</div>
+              <input type="file" id="wizard-input" accept=".xlsx,.xls" onchange="wizardParse(event)">
+            </div>
+          </div>
+
+          <div id="wizard-step-1" hidden>
+            <p class="wizard-hint">Colunas detectadas:</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Coluna</th><th>Tipo detectado</th><th>Exemplo</th></tr></thead>
+                <tbody id="wizard-colunas"></tbody>
+              </table>
+            </div>
+
+            <div class="note-box" id="wizard-atalho-lancamentos" hidden style="border-color:var(--accent);">
+              <span>🔁</span>
+              <span>Essa planilha parece um formato de lançamentos (data, descrição, categoria, tipo, valor). <button class="btn btn-primary btn-sm" style="margin-left:4px;" onclick="wizardImportarComoLancamentos()">Importar direto pra lista</button></span>
+            </div>
+
+            <div class="field" style="margin-top:14px;">
+              <label>Sobre o que é essa planilha?</label>
+              <input type="text" id="wizard-negocio">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="wizardConfirmarEstrutura()">Confirmar estrutura</button>
+          </div>
+
+          <div id="wizard-step-2" hidden>
+            <div class="field">
+              <label>O que você quer que o sistema monte com esses dados?</label>
+              <textarea id="wizard-prompt" rows="3" placeholder="ex: mostre o total por categoria e uma lista com tudo"></textarea>
+              <div class="wizard-example">Esse texto simula o prompt real que, no fluxo completo, vai pra API do Claude.</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="wizardGerar()">Gerar relatório</button>
+          </div>
+
+          <div id="wizard-step-3" hidden>
+            <div class="note-box" style="margin-top:0; margin-bottom:14px;">
+              <span>🛈</span>
+              <span>Isso é uma simulação local de "o que a IA montaria" — sem chamar a API de verdade ainda. No fluxo real (fase 2), seu pedido acima vai pro Claude e ele decide os gráficos certos.</span>
+            </div>
+            <div class="kpis" id="wizard-kpis"></div>
+            <div class="panel" style="background:var(--bg); box-shadow:none;">
+              <h3 id="wizard-chart-title">Total por categoria</h3>
+              <div class="catbar" id="wizard-catbar"></div>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead id="wizard-thead"></thead>
+                <tbody id="wizard-tbody"></tbody>
+              </table>
+            </div>
+            <div class="wizard-example" id="wizard-truncado" style="margin-top:8px;"></div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+              <button class="btn btn-primary btn-sm" style="background:var(--live);" onclick="wizardConfirmar()">✅ Confirmar e publicar</button>
+              <button class="btn btn-ghost btn-sm" onclick="wizardAjustar()">Ajustar pedido</button>
+              <button class="btn btn-ghost btn-sm" onclick="wizardReiniciar()">Resetar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="app-modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-icon info" id="modal-icon">i</div>
+    <h3 id="modal-title">Aviso</h3>
+    <p id="modal-message"></p>
+    <div style="display:flex; gap:8px; justify-content:center;">
+      <button class="btn btn-ghost btn-sm" id="modal-cancel" type="button" onclick="fecharModal()" hidden>Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="modal-ok" type="button" onclick="modalOkClick()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  // ---------- estado (vem do MySQL via n8n — nada mais é hardcoded) ----------
+  var API_BASE = 'http://localhost:5678/webhook';
+
+  var usuarioAtual = null;
+  var projetos = [];
+  var projetoAtualId = null;
+  var iaRascunhoAtual = null;
+
+  function abrirModal(tipo, titulo, mensagem){
+    var modal = document.getElementById('app-modal');
+    var icon = document.getElementById('modal-icon');
+    document.getElementById('modal-title').textContent = titulo || 'Aviso';
+    document.getElementById('modal-message').textContent = mensagem || '';
+    icon.className = 'modal-icon ' + (tipo || 'info');
+    icon.textContent = tipo === 'success' ? '✓' : (tipo === 'error' ? '!' : 'i');
+    modal.hidden = false;
+    setTimeout(function(){ document.getElementById('modal-ok').focus(); }, 0);
+  }
+
+  var modalConfirmCallback = null;
+
+  function fecharModal(){
+    document.getElementById('app-modal').hidden = true;
+    document.getElementById('modal-cancel').hidden = true;
+    document.getElementById('modal-ok').textContent = 'OK';
+    modalConfirmCallback = null;
+  }
+
+  function modalOkClick(){
+    var callback = modalConfirmCallback;
+    fecharModal();
+    if (callback) callback();
+  }
+
+  function aviso(mensagem, tipo, titulo){
+    abrirModal(tipo || 'info', titulo || 'Aviso', mensagem);
+  }
+
+  function confirmar(mensagem, titulo, onConfirm, textoOk){
+    modalConfirmCallback = onConfirm;
+    document.getElementById('modal-cancel').hidden = false;
+    document.getElementById('modal-ok').textContent = textoOk || 'Confirmar';
+    abrirModal('error', titulo || 'Confirmar', mensagem);
+  }
+
+  async function api(path, opts){
+    var res;
+    try{
+      res = await fetch(API_BASE + path, opts);
+    }catch(err){
+      aviso('Não consegui falar com o n8n (localhost:5678). Ele está rodando? Detalhe: ' + err.message, 'error', 'n8n indisponível');
+      throw err;
+    }
+    var data = {};
+    try{ data = await res.json(); }catch(e){ /* resposta vazia, ok pra alguns endpoints */ }
+    if(!res.ok){
+      aviso('Erro do servidor: ' + (data.erro || data.message || ('HTTP ' + res.status)), 'error', 'Falha na API');
+      throw new Error(data.erro || data.message || String(res.status));
+    }
+    return data;
+  }
+  function apiPost(path, body){
+    return api(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  }
+
+  async function apiLogin(email, senha){
+    var res;
+    try{
+      res = await fetch(API_BASE + '/usuarios/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email: email, senha: senha })
+      });
+    }catch(err){
+      aviso('Não consegui falar com o n8n (localhost:5678). Ele está rodando? Detalhe: ' + err.message, 'error', 'n8n indisponível');
+      throw err;
+    }
+    var data = {};
+    try{ data = await res.json(); }catch(e){}
+    if(!res.ok) return { ok:false, erro:'E-mail ou senha inválidos.' };
+    return data;
+  }
+  // n8n devolve o item "nu" (sem array) quando é só 1 resultado, e um array quando são vários.
+  function comoLista(resp){
+    if (Array.isArray(resp)) return resp;
+    if (resp && Array.isArray(resp.data)) return resp.data;
+    if (resp && (resp.id !== undefined)) return [resp];
+    return [];
+  }
+
+  function normalizarProjeto(r){
+    return {
+      id: r.id, usuario_id: r.usuario_id, nome: r.nome, slug: r.slug, tipo: r.tipo,
+      descricao: r.descricao, cor: r.cor, textoBoasVindas: r.texto_boas_vindas,
+      versao: r.versao, publicado: !!Number(r.publicado)
+    };
+  }
+  function normalizarLancamento(r){
+    return {
+      id: r.id, projeto_id: r.projeto_id, data: r.data, descricao: r.descricao,
+      categoria: r.categoria, tipo: r.tipo, valor: Number(r.valor), status: r.status
+    };
+  }
+
+  function projetoAtual(){ return projetos.find(function(p){ return p.id === projetoAtualId; }); }
+
+  function slugify(s){
+    return (s || '').toString().toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-+|-+$)/g, '') || 'projeto';
+  }
+
+  function fmtBRL(v){
+    return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  }
+
+  function aiConfigKey(projetoId){
+    return 'lowcodeduo_ai_config_' + projetoId;
+  }
+
+  function carregarAIConfig(projetoId){
+    try{ return JSON.parse(localStorage.getItem(aiConfigKey(projetoId)) || '{}'); }
+    catch(e){ return {}; }
+  }
+
+  function salvarAIConfig(projetoId, cfg){
+    localStorage.setItem(aiConfigKey(projetoId), JSON.stringify(cfg || {}));
+  }
+
+  async function entrar(){
+    var email = document.getElementById('login-email').value.trim();
+    var senha = document.getElementById('login-pass').value;
+    usuarioAtual = null;
+    projetos = [];
+    if(!email || !senha){
+      aviso('Informe e-mail e senha para entrar.', 'error', 'Campos obrigatórios');
+      return;
+    }
+    document.getElementById('view-app').hidden = true;
+    var resp;
+    try{ resp = await apiLogin(email, senha); }
+    catch(e){ return; }
+    if(!resp.ok){
+      aviso('E-mail ou senha inválidos.', 'error', 'Login não autorizado');
+      return;
+    }
+    var ok = await entrarComoUsuario(resp);
+    if (ok) salvarSessao(resp);
+  }
+
+  // usado tanto pelo login quanto pra restaurar a sessão depois de um F5
+  async function entrarComoUsuario(usuario){
+    usuarioAtual = usuario;
+    projetos = [];
+    projetoAtualId = null;
+    document.getElementById('view-app').hidden = true;
+
+    var lista;
+    try{ lista = await api('/projetos?usuario_id=' + encodeURIComponent(usuario.id) + '&papel=' + encodeURIComponent(usuario.papel || 'cliente')); }
+    catch(e){ return false; }
+    projetos = comoLista(lista).map(normalizarProjeto);
+    if(projetos.length === 0){
+      aviso('Login ok, mas esse usuário ainda não tem projetos.', 'info', 'Sem projetos');
+      return false;
+    }
+
+    // carrega os lançamentos de todos os projetos de uma vez (dataset pequeno,
+    // simplifica o home mostrar o saldo de cada card sem lazy-load por projeto)
+    await Promise.all(projetos.map(async function(p){
+      try{
+        var l = await api('/lancamentos?projeto_id=' + p.id);
+        p.lancamentos = comoLista(l).map(normalizarLancamento);
+      }catch(e){ p.lancamentos = []; }
+      if (p.lancamentos.length === 0){
+        await atualizarRelatorioGenerico(p);
+      }
+    }));
+
+    document.getElementById('home-greet').textContent = 'Olá, ' + usuarioAtual.nome;
+    document.getElementById('view-login').hidden = true;
+    document.getElementById('view-app').hidden = false;
+    popularSwitcher();
+    trocarProjeto(projetos[0].id);
+    return true;
+  }
+
+  function sessaoKey(){ return 'lowcodeduo_sessao'; }
+  function salvarSessao(usuario){
+    try{ sessionStorage.setItem(sessaoKey(), JSON.stringify(usuario)); }catch(e){}
+  }
+  function limparSessao(){
+    try{ sessionStorage.removeItem(sessaoKey()); }catch(e){}
+  }
+  function carregarSessaoSalva(){
+    try{ return JSON.parse(sessionStorage.getItem(sessaoKey()) || 'null'); }catch(e){ return null; }
+  }
+  async function restaurarSessao(){
+    var usuario = carregarSessaoSalva();
+    if (!usuario) return;
+    var ok = await entrarComoUsuario(usuario);
+    if (!ok) limparSessao();
+  }
+
+  function sair(){
+    document.getElementById('view-app').hidden = true;
+    document.getElementById('view-login').hidden = false;
+    usuarioAtual = null;
+    projetos = [];
+    projetoAtualId = null;
+    limparSessao();
+  }
+
+  function mostrarTela(nome){
+    document.querySelectorAll('nav.navlist button').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-screen') === nome);
+    });
+    document.querySelectorAll('.main > section').forEach(function(s){
+      s.hidden = s.getAttribute('data-screen') !== nome;
+    });
+  }
+
+  function popularSwitcher(){
+    var sel = document.getElementById('projeto-switcher');
+    sel.innerHTML = projetos.map(function(p){ return '<option value="' + p.id + '">' + p.nome + '</option>'; }).join('');
+  }
+
+  function trocarProjeto(id){
+    projetoAtualId = Number(id);
+    var p = projetoAtual();
+    p.aiConfig = carregarAIConfig(p.id);
+    document.getElementById('projeto-switcher').value = p.id;
+    document.documentElement.style.setProperty('--accent', p.cor);
+    document.getElementById('main-relatorios-sub').textContent = p.nome;
+    document.getElementById('main-excel-sub').textContent = p.nome;
+    document.getElementById('cfg-nome').value = p.nome;
+    document.getElementById('cfg-texto').value = p.textoBoasVindas;
+    document.getElementById('cfg-slug-preview').textContent = '/apps/' + p.slug + '/';
+    document.getElementById('pv-titulo').textContent = p.nome;
+    document.getElementById('pv-glyph').style.background = p.cor;
+    document.getElementById('pv-btn').style.background = p.cor;
+    atualizarSidebarPill();
+    renderHome();
+    renderTudo();
+  }
+
+  function irParaProjeto(id){
+    trocarProjeto(id);
+    mostrarTela('relatorios');
+  }
+
+  function renderHome(){
+    var el = document.getElementById('home-proj-grid');
+    el.innerHTML = projetos.map(function(p){
+      var saldo = p.lancamentos.reduce(function(s,l){ return s + (l.tipo === 'entrada' ? l.valor : -l.valor); }, 0);
+      var pillClass = p.publicado ? 'pill live' : 'pill pending';
+      return '<div class="proj-card" onclick="irParaProjeto(' + p.id + ')">' +
+        '<button class="btn-icon-ghost proj-remove" onclick="event.stopPropagation(); excluirProjeto(' + p.id + ')" title="Excluir projeto">✕</button>' +
+        '<div class="pname">' + p.nome + '</div>' +
+        '<div class="ptype">tipo: ' + p.tipo + ' · <span class="mono">/apps/' + p.slug + '/</span></div>' +
+        '<div class="pbal tabular">' + fmtBRL(saldo) + '</div>' +
+        '<span class="' + pillClass + '" style="width:fit-content"><span class="d"></span>v' + p.versao + '</span>' +
+        '</div>';
+    }).join('') +
+      '<div class="proj-card" style="align-items:center; justify-content:center; text-align:center; color:var(--text-muted);" onclick="mostrarNovoProjetoForm()">' +
+      '<div style="font-size:26px; line-height:1;">+</div><div class="pname">Novo projeto</div></div>';
+  }
+
+  function excluirProjeto(id){
+    var p = projetos.find(function(x){ return x.id === id; });
+    if (!p) return;
+    if (projetos.length <= 1){
+      aviso('Você precisa ter pelo menos 1 projeto — crie outro antes de excluir este.', 'error', 'Não é possível excluir');
+      return;
+    }
+    confirmar('Excluir o projeto "' + p.nome + '"? Isso apaga todos os lançamentos e planilhas importadas dele. Essa ação não pode ser desfeita.', 'Excluir projeto', async function(){
+      try{ await apiPost('/projetos/excluir', { id: id }); }
+      catch(e){ return; }
+      projetos = projetos.filter(function(x){ return x.id !== id; });
+      popularSwitcher();
+      if (projetoAtualId === id) trocarProjeto(projetos[0].id);
+      renderHome();
+      aviso('Projeto "' + p.nome + '" excluído.', 'success', 'Excluído');
+    }, 'Excluir');
+  }
+
+  function mostrarNovoProjetoForm(){
+    document.getElementById('novo-projeto-panel').hidden = false;
+    document.getElementById('np-nome').focus();
+  }
+
+  function lerArquivoXlsx(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        try{
+          var data = new Uint8Array(e.target.result);
+          var wb = XLSX.read(data, {type:'array'});
+          var sheet = wb.Sheets[wb.SheetNames[0]];
+          var rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+          resolve(rows);
+        }catch(err){ reject(err); }
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async function criarProjeto(){
+    var nome = document.getElementById('np-nome').value.trim();
+    var tipo = document.getElementById('np-tipo').value.trim() || 'Geral';
+    var cor = document.getElementById('np-cor').value || '#2B59C3';
+    var arquivo = document.getElementById('np-arquivo').files[0];
+    if (!nome){
+      aviso('Informe um nome para o projeto.', 'error', 'Nome obrigatório');
+      return;
+    }
+
+    var rows = null;
+    if (arquivo){
+      try{ rows = await lerArquivoXlsx(arquivo); }
+      catch(e){ aviso('Não consegui ler essa planilha. Confira se é um .xlsx válido.', 'error', 'Arquivo inválido'); return; }
+      if (rows.length === 0){ aviso('Planilha vazia ou não reconhecida.', 'error', 'Arquivo inválido'); return; }
+    }
+
+    var resp;
+    try{
+      resp = await apiPost('/projetos/criar', { usuario_id: usuarioAtual.id, nome: nome, tipo: tipo, cor: cor });
+    }catch(e){ return; }
+    var novo = normalizarProjeto(resp);
+    novo.lancamentos = [];
+    projetos.push(novo);
+    document.getElementById('np-nome').value = '';
+    document.getElementById('np-tipo').value = '';
+    document.getElementById('np-arquivo').value = '';
+    document.getElementById('novo-projeto-panel').hidden = true;
+    popularSwitcher();
+    trocarProjeto(novo.id);
+
+    if (rows){
+      var colunas = Object.keys(rows[0]);
+      if (pareceLancamentoAluguel(colunas)){
+        wizardRows = rows;
+        await wizardImportarComoLancamentos();
+        return;
+      }
+      wizardArquivoNome = arquivo.name;
+      mostrarColunasDetectadas(rows);
+      mostrarTela('excel');
+      aviso('Projeto "' + novo.nome + '" criado. Essa planilha não é de lançamentos — confira as colunas detectadas e siga o assistente pra montar o relatório.', 'info', 'Confirme os dados');
+      return;
+    }
+
+    aviso('Projeto "' + novo.nome + '" criado.', 'success', 'Projeto criado');
+    irParaProjeto(novo.id);
+  }
+
+  function atualizarSidebarPill(){
+    var p = projetoAtual();
+    var pill = document.getElementById('version-pill');
+    pill.className = p.publicado ? 'pill live' : 'pill pending';
+    pill.innerHTML = '<span class="d"></span>v' + p.versao;
+    document.getElementById('version-note').textContent = p.publicado
+      ? 'Publicada no banco — falta só o deploy de verdade (Git/VPS).'
+      : 'Ainda não publicada — publique em Importar Excel ou nos ajustes de layout.';
+  }
+
+  function renderTudo(){
+    renderRelatorioGenerico();
+    renderAIControls();
+    renderKPIs();
+    renderAIDashboard();
+    renderTabela();
+    renderCategoriasDatalist();
+  }
+
+  function lancamentosFiltrados(){
+    var p = projetoAtual();
+    var lancamentos = p.lancamentos || [];
+    var cfg = p.aiConfig || {};
+    if (cfg.monthFilter){
+      var sel = document.getElementById('ai-month-filter');
+      var mes = sel ? sel.value : '';
+      if (mes) lancamentos = lancamentos.filter(function(l){ return (l.data || '').slice(0,7) === mes; });
+    }
+    return lancamentos;
+  }
+
+  function renderAIControls(){
+    var p = projetoAtual();
+    var cfg = p.aiConfig || {};
+    var panel = document.getElementById('ai-controls-panel');
+    var hasControls = !!(cfg.monthFilter || cfg.tableColumnToggle);
+    panel.hidden = !hasControls;
+    if (!hasControls) return;
+
+    var monthWrap = document.getElementById('ai-month-filter-wrap');
+    monthWrap.hidden = !cfg.monthFilter;
+    if (cfg.monthFilter){
+      var select = document.getElementById('ai-month-filter');
+      var atual = select.value;
+      var meses = Array.from(new Set((p.lancamentos || []).map(function(l){ return (l.data || '').slice(0,7); }).filter(Boolean))).sort();
+      select.innerHTML = '<option value="">Todos os meses</option>' + meses.map(function(m){
+        return '<option value="' + m + '">' + m.split('-').reverse().join('/') + '</option>';
+      }).join('');
+      select.value = meses.indexOf(atual) >= 0 ? atual : '';
+    }
+
+    var colWrap = document.getElementById('ai-column-toggle-wrap');
+    colWrap.hidden = !cfg.tableColumnToggle;
+    if (cfg.tableColumnToggle){
+      cfg.tableColumns = cfg.tableColumns || { data:true, descricao:true, categoria:true, tipo:true, status:true, valor:true };
+      document.getElementById('ai-column-toggles').innerHTML = [
+        ['data','Data'], ['descricao','Descrição'], ['categoria','Categoria'], ['tipo','Tipo'], ['status','Status'], ['valor','Valor']
+      ].map(function(pair){
+        return '<label class="chip" style="cursor:pointer"><input type="checkbox" ' + (cfg.tableColumns[pair[0]] ? 'checked' : '') + ' onchange="toggleColunaTabela(&quot;' + pair[0] + '&quot;, this.checked)"> ' + pair[1] + '</label>';
+      }).join('');
+    }
+  }
+
+  function toggleColunaTabela(col, checked){
+    var p = projetoAtual();
+    p.aiConfig = p.aiConfig || {};
+    p.aiConfig.tableColumns = p.aiConfig.tableColumns || {};
+    p.aiConfig.tableColumns[col] = checked;
+    salvarAIConfig(p.id, p.aiConfig);
+    renderTabela();
+  }
+
+  function renderKPIs(){
+    var lancamentos = lancamentosFiltrados();
+    var entradas = lancamentos.filter(function(l){return l.tipo==='entrada';}).reduce(function(s,l){return s+l.valor;},0);
+    var saidas = lancamentos.filter(function(l){return l.tipo==='saida';}).reduce(function(s,l){return s+l.valor;},0);
+    var saldo = entradas - saidas;
+    document.getElementById('kpi-entradas').textContent = fmtBRL(entradas);
+    document.getElementById('kpi-saidas').textContent = fmtBRL(saidas);
+    document.getElementById('kpi-saldo').textContent = fmtBRL(saldo);
+  }
+
+  var WIDGETS_PADRAO = [
+    { type:'bar', title:'Saldo por categoria', groupBy:'categoria', agg:'sum', signed:true }
+  ];
+
+  function valorAssinado(l){
+    return (l.tipo === 'saida' ? -1 : 1) * l.valor;
+  }
+
+  function chaveGroupBy(l, campo){
+    if (campo === 'mes') return (l.data || '').slice(0,7) || 'sem-data';
+    if (campo === 'tipo') return l.tipo === 'entrada' ? 'Entrada' : 'Saída';
+    if (campo === 'status') return l.status === 'pago' ? 'Pago' : 'Pendente';
+    return l[campo] || ('Sem ' + campo);
+  }
+
+  function agregarWidget(lancamentos, widget){
+    var campo = widget.groupBy || 'categoria';
+    var agg = widget.agg || 'sum';
+    var signed = widget.type !== 'pie' && !!widget.signed;
+    var base = widget.filtro
+      ? lancamentos.filter(function(l){
+          return Object.keys(widget.filtro).every(function(k){ return l[k] === widget.filtro[k]; });
+        })
+      : lancamentos;
+    var grupos = {};
+    base.forEach(function(l){
+      var chave = chaveGroupBy(l, campo);
+      var v = signed ? valorAssinado(l) : Math.abs(l.valor);
+      if (!grupos[chave]) grupos[chave] = { total:0, count:0 };
+      grupos[chave].total += v;
+      grupos[chave].count += 1;
+    });
+    var resultado = {};
+    Object.keys(grupos).forEach(function(k){
+      var g = grupos[k];
+      resultado[k] = agg === 'avg' ? (g.count ? g.total / g.count : 0) : agg === 'count' ? g.count : g.total;
+    });
+    return resultado;
+  }
+
+  function agruparRecebidosPorMes(lancamentos){
+    var meses = {};
+    lancamentos.forEach(function(l){
+      if (l.tipo !== 'entrada' || l.status !== 'pago') return;
+      var mes = (l.data || '').slice(0,7) || 'sem-data';
+      meses[mes] = (meses[mes] || 0) + l.valor;
+    });
+    return meses;
+  }
+
+  function agruparValorPorCategoria(lancamentos){
+    return agruparValorPorCampo(lancamentos, 'categoria');
+  }
+
+  function agruparValorPorCampo(lancamentos, campo){
+    var grupos = {};
+    lancamentos.forEach(function(l){
+      var chave = l[campo] || 'Sem ' + campo;
+      if (campo === 'tipo') chave = l.tipo === 'entrada' ? 'Entrada' : 'Saída';
+      if (campo === 'status') chave = l.status === 'pago' ? 'Pago' : 'Pendente';
+      grupos[chave] = (grupos[chave] || 0) + Math.abs(l.valor);
+    });
+    return grupos;
+  }
+
+  function renderDonut(grupos, formatValue){
+    formatValue = formatValue || fmtBRL;
+    var keys = Object.keys(grupos).filter(function(k){ return grupos[k] > 0; });
+    var total = keys.reduce(function(s,k){ return s + grupos[k]; }, 0);
+    if (!total) return '<div class="wizard-example">Ainda não há lançamentos para montar o gráfico pizza.</div>';
+    var cores = ['#2B59C3','#187A4C','#A6690A','#B33A22','#7C3AED','#0F766E','#D97706','#5B6273'];
+    var inicio = 0;
+    var partes = keys.map(function(k, i){
+      var fim = inicio + (grupos[k] / total * 100);
+      var parte = cores[i % cores.length] + ' ' + inicio.toFixed(2) + '% ' + fim.toFixed(2) + '%';
+      inicio = fim;
+      return parte;
+    });
+    var legenda = keys.map(function(k, i){
+      var pct = Math.round(grupos[k] / total * 100);
+      return '<div class="legend-row">' +
+        '<span class="legend-dot" style="background:' + cores[i % cores.length] + '"></span>' +
+        '<span>' + k + '</span>' +
+        '<span class="tabular">' + pct + '% · ' + formatValue(grupos[k]) + '</span>' +
+      '</div>';
+    }).join('');
+    return '<div class="donut-wrap">' +
+      '<div class="donut" style="background:conic-gradient(' + partes.join(',') + ')"></div>' +
+      '<div class="legend">' + legenda + '</div>' +
+    '</div>';
+  }
+
+  function renderAIDashboard(){
+    var p = projetoAtual();
+    var cfg = p.aiConfig || {};
+    if (cfg.widgets === undefined){
+      cfg.widgets = WIDGETS_PADRAO.slice();
+      p.aiConfig = cfg;
+      salvarAIConfig(p.id, cfg);
+    }
+    var panel = document.getElementById('ai-dashboard-panel');
+    var widgets = (cfg.widgets || []).map(function(w, i){
+      return Object.assign({ _source:'widgets', _index:i }, w);
+    });
+    if (cfg.pieCategoryChart && !widgets.some(function(w){ return w.type === 'pie' && w.groupBy === 'categoria'; })){
+      widgets.push({ type:'pie', title:'Gráfico pizza por categoria', groupBy:'categoria', metric:'sum(valor)', _source:'pieCategoryChart' });
+    }
+    if (cfg.monthlyReceivedChart && !widgets.some(function(w){ return w.type === 'bar' && w.groupBy === 'mes'; })){
+      widgets.push({ type:'bar', title:'Recebidos por mês', groupBy:'mes', metric:'sum(valor)', _source:'monthlyReceivedChart' });
+    }
+    if (widgets.length === 0){
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    document.getElementById('ai-dashboard-title').textContent = 'Dashboard aplicado';
+    document.getElementById('ai-dashboard-chart').innerHTML = '<div class="widget-grid">' + widgets.map(function(w){ return renderWidget(w, { removable:true }); }).join('') + '</div>';
+  }
+
+  function removerWidgetAI(source, index){
+    confirmar('Remover este gráfico do dashboard?', 'Remover gráfico', function(){
+      var p = projetoAtual();
+      var cfg = p.aiConfig || {};
+      if (source === 'widgets'){
+        cfg.widgets = (cfg.widgets || []).filter(function(_, i){ return i !== index; });
+      } else if (source === 'pieCategoryChart'){
+        cfg.pieCategoryChart = false;
+      } else if (source === 'monthlyReceivedChart'){
+        cfg.monthlyReceivedChart = false;
+      }
+      p.aiConfig = cfg;
+      salvarAIConfig(p.id, cfg);
+      renderTudo();
+      aviso('Gráfico removido do dashboard.', 'success', 'Removido');
+    }, 'Remover');
+  }
+
+  function renderWidget(widget, opts){
+    var lancamentos = lancamentosFiltrados();
+    var groupBy = widget.groupBy || 'categoria';
+    var grupos = agregarWidget(lancamentos, widget);
+    var body;
+    if (widget.type === 'pie'){
+      body = renderDonut(grupos);
+    } else {
+      var keys = groupBy === 'mes'
+        ? Object.keys(grupos).sort()
+        : Object.keys(grupos).sort(function(a,b){ return Math.abs(grupos[b]) - Math.abs(grupos[a]); });
+      var formatKey = groupBy === 'mes' ? function(k){ return k.split('-').reverse().join('/'); } : function(k){ return k; };
+      body = renderCatBarList(grupos, keys, formatKey);
+    }
+    var removeBtn = (opts && opts.removable)
+      ? '<button class="btn-icon-ghost" onclick="removerWidgetAI(\'' + widget._source + '\', ' + (widget._index != null ? widget._index : 'null') + ')" title="Remover este gráfico">✕</button>'
+      : '';
+    return '<div class="widget-card"><div class="widget-card-head"><h3>' + (widget.title || 'Gráfico') + '</h3>' + removeBtn + '</div>' + body + '</div>';
+  }
+
+  function renderCatBarList(grupos, keys, formatKey, formatValue){
+    formatValue = formatValue || fmtBRL;
+    if (!keys.length) return '<div class="wizard-example">Sem dados para este gráfico.</div>';
+    var max = Math.max.apply(null, keys.map(function(k){ return Math.abs(grupos[k]); }).concat([1]));
+    return keys.map(function(k){
+      var v = grupos[k];
+      var pct = Math.round(Math.abs(v) / max * 100);
+      var cor = v < 0 ? 'var(--danger)' : 'var(--accent)';
+      return '<div class="catbar-row"><span>' + formatKey(k) + '</span>' +
+        '<span class="catbar-track"><span class="catbar-fill" style="width:' + pct + '%; background:' + cor + '"></span></span>' +
+        '<span class="tabular" style="text-align:right">' + formatValue(v) + '</span></div>';
+    }).join('');
+  }
+
+  function renderTabela(){
+    var base = projetoAtual().lancamentos;
+    var filtrados = lancamentosFiltrados();
+    var tbody = document.getElementById('tbody-lancamentos');
+    tbody.innerHTML = '';
+    var indices = filtrados.map(function(l){ return base.indexOf(l); }).filter(function(i){ return i >= 0; });
+    var cfgTabela = projetoAtual().aiConfig || {};
+    if (cfgTabela.sortTable && cfgTabela.sortTable.field === 'valor'){
+      indices.sort(function(a,b){
+        return cfgTabela.sortTable.direction === 'asc' ? base[a].valor - base[b].valor : base[b].valor - base[a].valor;
+      });
+    } else {
+      indices.sort(function(a,b){ return base[a].data < base[b].data ? 1 : -1; });
+    }
+    var cols = (cfgTabela.tableColumnToggle && cfgTabela.tableColumns) || { data:true, descricao:true, categoria:true, tipo:true, status:true, valor:true };
+    indices.forEach(function(i){
+      var l = base[i];
+      var tr = document.createElement('tr');
+      var dataFmt = l.data.split('-').reverse().slice(0,2).join('/');
+      var statusPago = l.status === 'pago';
+      var cfg = projetoAtual().aiConfig || {};
+      var statusHtml = cfg.statusControl
+        ? '<select class="switcher" style="width:auto; padding:5px 8px;" onchange="alterarStatusLancamento(' + i + ', this.value)">' +
+            '<option value="pago"' + (statusPago ? ' selected' : '') + '>Pago</option>' +
+            '<option value="pendente"' + (!statusPago ? ' selected' : '') + '>Pendente</option>' +
+          '</select>'
+        : '<span class="pill ' + (statusPago ? 'live' : 'pending') + '" style="cursor:pointer" onclick="togglePago(' + i + ')"><span class="d"></span>' + (statusPago ? 'Pago' : 'Pendente') + '</span>';
+      var cells = '';
+      if (cols.data !== false) cells += '<td class="mono">' + dataFmt + '</td>';
+      if (cols.descricao !== false) cells += '<td>' + l.descricao + '</td>';
+      if (cols.categoria !== false) cells += '<td><span class="chip">' + l.categoria + '</span></td>';
+      if (cols.tipo !== false) cells += '<td><span class="typ ' + l.tipo + '"><span class="d"></span>' + (l.tipo==='entrada'?'Entrada':'Saída') + '</span></td>';
+      if (cols.status !== false) cells += '<td>' + statusHtml + '</td>';
+      if (cols.valor !== false) cells += '<td class="num">' + fmtBRL(l.valor) + '</td>';
+      tr.innerHTML = cells + '<td><div style="display:flex; gap:6px;">' +
+          '<button class="btn btn-ghost btn-sm" onclick="editarLancamento(' + i + ')">Editar</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="excluirLancamento(' + i + ')">Excluir</button>' +
+        '</div></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function togglePago(i){
+    var l = projetoAtual().lancamentos[i];
+    var resp;
+    try{ resp = await apiPost('/lancamentos/status', { id: l.id }); }
+    catch(e){ return; }
+    l.status = resp.status;
+    renderTabela();
+  }
+
+  async function alterarStatusLancamento(i, status){
+    var l = projetoAtual().lancamentos[i];
+    if (l.status === status) return;
+    var resp;
+    try{ resp = await apiPost('/lancamentos/status', { id: l.id }); }
+    catch(e){ renderTabela(); return; }
+    l.status = resp.status;
+    renderTudo();
+    renderHome();
+  }
+
+  async function editarLancamento(i){
+    var l = projetoAtual().lancamentos[i];
+    var novaDesc = prompt('Descrição:', l.descricao);
+    if (novaDesc === null) return;
+    var novaCat = prompt('Categoria:', l.categoria);
+    if (novaCat === null) return;
+    var novoValor = prompt('Valor (R$):', l.valor);
+    if (novoValor === null) return;
+    novoValor = parseFloat(String(novoValor).replace(',', '.'));
+    if (isNaN(novoValor)){ aviso('Valor inválido — nada foi alterado.', 'error', 'Valor inválido'); return; }
+    var resp;
+    try{
+      resp = await apiPost('/lancamentos/editar', {
+        id: l.id, descricao: novaDesc.trim() || l.descricao,
+        categoria: novaCat.trim() || l.categoria, valor: novoValor
+      });
+    }catch(e){ return; }
+    Object.assign(l, normalizarLancamento(resp));
+    renderTudo();
+    renderHome();
+  }
+
+  function excluirLancamento(i){
+    var lancamentos = projetoAtual().lancamentos;
+    confirmar('Excluir "' + lancamentos[i].descricao + '"?', 'Excluir lançamento', async function(){
+      var id = lancamentos[i].id;
+      try{ await apiPost('/lancamentos/excluir', { id: id }); }
+      catch(e){ return; }
+      lancamentos.splice(i, 1);
+      renderTudo();
+      renderHome();
+    }, 'Excluir');
+  }
+
+  function renderCategoriasDatalist(){
+    var cats = Array.from(new Set(projetoAtual().lancamentos.map(function(l){return l.categoria;})));
+    var dl = document.getElementById('cat-list');
+    dl.innerHTML = cats.map(function(c){return '<option value="'+c+'">';}).join('');
+  }
+
+  async function adicionarLancamento(){
+    var data = document.getElementById('f-data').value;
+    var desc = document.getElementById('f-desc').value.trim();
+    var cat = document.getElementById('f-cat').value.trim();
+    var tipo = document.getElementById('f-tipo').value;
+    var status = document.getElementById('f-status').value;
+    var valor = parseFloat(document.getElementById('f-valor').value);
+
+    if(!data || !desc || !cat || isNaN(valor)){
+      aviso('Preencha data, descrição, categoria e valor.', 'error', 'Campos obrigatórios');
+      return;
+    }
+    var resp;
+    try{
+      resp = await apiPost('/lancamentos/criar', {
+        projeto_id: projetoAtualId, data: data, descricao: desc,
+        categoria: cat, tipo: tipo, valor: valor, status: status
+      });
+    }catch(e){ return; }
+    projetoAtual().lancamentos.push(normalizarLancamento(resp));
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-cat').value = '';
+    document.getElementById('f-valor').value = '';
+    renderTudo();
+    renderHome();
+  }
+
+  // ---------- editar layout ----------
+  var corSelecionada = null;
+  function setCor(hex, el){
+    corSelecionada = hex;
+    document.documentElement.style.setProperty('--accent', hex);
+    document.querySelectorAll('.swatch').forEach(function(s){ s.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById('pv-glyph').style.background = hex;
+    document.getElementById('pv-btn').style.background = hex;
+  }
+  async function salvarLayout(){
+    var p = projetoAtual();
+    var nomeNovo = document.getElementById('cfg-nome').value || p.nome;
+    var textoNovo = document.getElementById('cfg-texto').value || p.textoBoasVindas;
+    var corNova = corSelecionada || p.cor;
+    var slugAntigo = p.slug;
+    var resp;
+    try{
+      resp = await apiPost('/projetos/atualizar', {
+        id: p.id, nome: nomeNovo, cor: corNova, texto_boas_vindas: textoNovo
+      });
+    }catch(e){ return; }
+    Object.assign(p, normalizarProjeto(resp));
+    var nomeMudou = p.slug !== slugAntigo;
+    popularSwitcher();
+    document.getElementById('projeto-switcher').value = p.id;
+    document.getElementById('main-relatorios-sub').textContent = p.nome;
+    document.getElementById('main-excel-sub').textContent = p.nome;
+    document.getElementById('cfg-slug-preview').textContent = '/apps/' + p.slug + '/';
+    document.getElementById('pv-titulo').textContent = p.nome;
+    renderHome();
+    aviso('Layout salvo no banco.' + (nomeMudou ? ' Endereço de publicação atualizado pra /apps/' + p.slug + '/.' : ''), 'success', 'Layout salvo');
+  }
+
+  // ---------- alterações com IA (rascunho -> aprovação -> publicação) ----------
+  function gerarRascunhoLocal(pedido){
+    var texto = (pedido || '').toLowerCase();
+    var mudancas = [];
+
+    if (/pizza|donut|rosca|categoria/.test(texto) && /gr[aá]fico|chart|pizza|donut|rosca/.test(texto)){
+      mudancas.push({
+        tipo: 'pieCategoryChart',
+        titulo: 'Gráfico pizza por categoria',
+        descricao: 'Mostra os lançamentos agrupados por categoria em um gráfico de pizza/donut.'
+      });
+    }
+
+    if (/orden|maior.*menor|menor.*maior|valor maior|valor menor/.test(texto)){
+      var asc = /menor.*maior|crescente|asc/.test(texto);
+      mudancas.push({
+        tipo: 'sortTable',
+        field: 'valor',
+        direction: asc ? 'asc' : 'desc',
+        titulo: asc ? 'Ordenar valores do menor para o maior' : 'Ordenar valores do maior para o menor',
+        descricao: 'A tabela de lançamentos passará a abrir ordenada pelo valor.'
+      });
+    }
+
+    if (/filtro|filtrar|m[eê]s|mensal/.test(texto)){
+      mudancas.push({
+        tipo: 'monthFilter',
+        titulo: 'Filtro de mês',
+        descricao: 'Adiciona um seletor para filtrar KPIs, gráficos e tabela por mês.'
+      });
+    }
+
+    if (/coluna|colunas|ocultar|mostrar campo|campos/.test(texto)){
+      mudancas.push({
+        tipo: 'tableColumnToggle',
+        titulo: 'Escolher colunas da tabela',
+        descricao: 'Adiciona controles para mostrar ou ocultar colunas dos lançamentos.'
+      });
+    }
+
+    if (/pago|pendente|status|recebid/.test(texto)){
+      mudancas.push({
+        tipo: 'statusControl',
+        titulo: 'Status editável na tabela',
+        descricao: 'Troca o selo clicável por um seletor claro Pago/Pendente em cada lançamento.'
+      });
+    }
+
+    if (/m[eê]s|mensal|recebid|entrada|dashboard/.test(texto) && !mudancas.some(function(m){ return m.tipo === 'pieCategoryChart'; })){
+      mudancas.push({
+        tipo: 'monthlyReceivedChart',
+        titulo: 'Gráfico de recebidos por mês',
+        descricao: 'Adiciona um painel em Relatórios agrupando entradas pagas por mês.'
+      });
+    }
+
+    if (/layout|visual|cor|card/.test(texto)){
+      mudancas.push({
+        tipo: 'layoutSuggestion',
+        titulo: 'Ajuste visual sugerido',
+        descricao: 'Mantém a mudança como sugestão de layout para revisão antes de publicar.'
+      });
+    }
+
+    if (mudancas.length === 0){
+      mudancas.push({
+        tipo: 'analysisOnly',
+        titulo: 'Pedido registrado para análise',
+        descricao: 'Não identifiquei uma mudança automática segura. No fluxo com IA real, o pedido vai para o modelo gerar uma proposta estruturada.'
+      });
+    }
+
+    return {
+      pedido: pedido,
+      projeto_id: projetoAtualId,
+      mudancas: mudancas
+    };
+  }
+
+  function gerarPreviewRascunho(rascunho){
+    var p = projetoAtual();
+    var ehGenerico = p.lancamentos.length === 0 && !!p.relatorioGenerico;
+    var html = [];
+    var widgets = widgetsDoRascunho(rascunho);
+    if (widgets.length){
+      var renderizador = ehGenerico ? renderWidgetGenerico : renderWidget;
+      html.push('<div class="widget-grid">' + widgets.map(function(w){ return renderizador(w); }).join('') + '</div>');
+    }
+    if (rascunho.mudancas.some(function(m){ return m.tipo === 'pieCategoryChart'; })){
+      html.push('<div class="panel" style="margin-bottom:10px;"><h3>Gráfico pizza por categoria</h3>' + renderDonut(agruparValorPorCategoria(lancamentosFiltrados())) + '</div>');
+    }
+    if (rascunho.mudancas.some(function(m){ return m.tipo === 'monthlyReceivedChart'; })){
+      var grupos = agruparRecebidosPorMes(lancamentosFiltrados());
+      var keys = Object.keys(grupos).sort();
+      html.push('<div class="panel" style="margin-bottom:10px;"><h3>Recebidos por mês</h3><div class="catbar">');
+      if (keys.length === 0){
+        html.push('<div class="wizard-example">Sem entradas pagas ainda.</div>');
+      } else {
+        var max = Math.max.apply(null, keys.map(function(k){ return grupos[k]; }).concat([1]));
+        keys.forEach(function(k){
+          var pct = Math.round(grupos[k] / max * 100);
+          html.push('<div class="catbar-row"><span>' + k.split('-').reverse().join('/') + '</span><span class="catbar-track"><span class="catbar-fill" style="width:' + pct + '%"></span></span><span class="tabular" style="text-align:right">' + fmtBRL(grupos[k]) + '</span></div>');
+        });
+      }
+      html.push('</div></div>');
+    }
+    if (rascunho.mudancas.some(function(m){ return m.tipo === 'statusControl'; })){
+      html.push('<div class="wizard-example">Na tabela de lançamentos, a coluna Status passará a exibir um seletor Pago/Pendente para cada linha.</div>');
+    }
+    var sort = rascunho.mudancas.find(function(m){ return m.tipo === 'sortTable'; });
+    if (sort){
+      html.push('<div class="wizard-example">A tabela abrirá ordenada por valor: ' + (sort.direction === 'asc' ? 'menor para maior' : 'maior para menor') + '.</div>');
+    }
+    if (rascunho.mudancas.some(function(m){ return m.tipo === 'monthFilter'; })){
+      html.push('<div class="wizard-example">Será adicionado um filtro de mês afetando KPIs, gráficos e tabela.</div>');
+    }
+    if (rascunho.mudancas.some(function(m){ return m.tipo === 'tableColumnToggle'; })){
+      html.push('<div class="wizard-example">Será adicionado um controle para ligar/desligar colunas da tabela.</div>');
+    }
+    rascunho.mudancas.filter(function(m){ return m.tipo === 'removerWidget'; }).forEach(function(m){
+      var existe = todosWidgetsAtuais(p.aiConfig || {}).some(function(w){ return w.title === m.widgetTitle; });
+      html.push('<div class="wizard-example" style="border-color:var(--danger);">' +
+        (existe ? 'Será removido o gráfico: "' + m.widgetTitle + '".' : 'Aviso: não encontrei um gráfico chamado "' + m.widgetTitle + '" no dashboard atual — nada será removido.') +
+        '</div>');
+    });
+    return html.join('') || '<div class="wizard-example">Rascunho criado. Aprove para registrar uma nova versão.</div>';
+  }
+
+  function todosWidgetsAtuais(cfg){
+    var lista = (cfg.widgets || []).map(function(w, i){ return { title: w.title, source:'widgets', index:i }; });
+    if (cfg.pieCategoryChart) lista.push({ title:'Gráfico pizza por categoria', source:'pieCategoryChart' });
+    if (cfg.monthlyReceivedChart) lista.push({ title:'Recebidos por mês', source:'monthlyReceivedChart' });
+    return lista;
+  }
+
+  function aplicarRemocoesWidgets(cfg, rascunho){
+    var atuais = todosWidgetsAtuais(cfg);
+    (rascunho.mudancas || []).forEach(function(m){
+      if (m.tipo !== 'removerWidget' || !m.widgetTitle) return;
+      var alvo = atuais.find(function(w){ return w.title === m.widgetTitle; });
+      if (!alvo) return;
+      if (alvo.source === 'widgets'){
+        cfg.widgets = (cfg.widgets || []).filter(function(_, i){ return i !== alvo.index; });
+      } else if (alvo.source === 'pieCategoryChart'){
+        cfg.pieCategoryChart = false;
+      } else if (alvo.source === 'monthlyReceivedChart'){
+        cfg.monthlyReceivedChart = false;
+      }
+    });
+  }
+
+  function construirItensRascunho(rascunho){
+    var itens = [];
+    (rascunho.mudancas || []).forEach(function(m){ itens.push({ kind:'mudanca', ref:m, selecionado:true }); });
+    (rascunho.widgets || []).forEach(function(w){ itens.push({ kind:'widget', ref:w, selecionado:true }); });
+    return itens;
+  }
+
+  function rascunhoFiltrado(rascunho){
+    var itens = rascunho.itens || [];
+    return {
+      mudancas: itens.filter(function(i){ return i.kind === 'mudanca' && i.selecionado; }).map(function(i){ return i.ref; }),
+      widgets: itens.filter(function(i){ return i.kind === 'widget' && i.selecionado; }).map(function(i){ return i.ref; })
+    };
+  }
+
+  function alternarItemRascunho(idx){
+    if (!iaRascunhoAtual || !iaRascunhoAtual.itens || !iaRascunhoAtual.itens[idx]) return;
+    iaRascunhoAtual.itens[idx].selecionado = !iaRascunhoAtual.itens[idx].selecionado;
+    renderRascunhoIA(iaRascunhoAtual);
+  }
+
+  function renderRascunhoIA(rascunho){
+    if (!rascunho.itens) rascunho.itens = construirItensRascunho(rascunho);
+    document.getElementById('ia-rascunho-cards').innerHTML = rascunho.itens.map(function(item, idx){
+      var r = item.ref;
+      var tipo, titulo, descricao;
+      if (item.kind === 'mudanca'){
+        tipo = r.tipo; titulo = r.titulo || r.tipo; descricao = r.descricao || '';
+      } else {
+        var metrica = r.agg === 'avg' ? 'Média' : r.agg === 'count' ? 'Quantidade' : 'Soma';
+        tipo = 'widget:' + (r.type || 'chart');
+        titulo = r.title || 'Novo widget';
+        descricao = 'Agrupamento: ' + (r.groupBy || 'auto') + ' · ' + metrica + (r.signed ? ' (saldo líquido)' : '');
+      }
+      return '<div class="ai-draft-card ' + (item.selecionado ? 'selecionado' : 'descartado') + '" onclick="alternarItemRascunho(' + idx + ')">' +
+        '<div class="kind">' + tipo + '</div>' +
+        '<div class="name">' + titulo + '</div>' +
+        '<div class="desc">' + descricao + '</div>' +
+        '<div class="card-check">' + (item.selecionado ? '✓ Será aplicado' : '✕ Ignorado — clique pra incluir') + '</div>' +
+      '</div>';
+    }).join('');
+    document.getElementById('ia-preview').innerHTML = gerarPreviewRascunho(rascunhoFiltrado(rascunho));
+    document.getElementById('ia-rascunho').hidden = false;
+  }
+
+  function widgetsDoRascunho(rascunho){
+    var widgets = (rascunho.widgets || []).slice();
+    (rascunho.mudancas || []).forEach(function(m){
+      if (m.tipo === 'pieCategoryChart' && !widgets.some(function(w){ return w.type === 'pie' && w.groupBy === 'categoria'; })){
+        widgets.push({ type:'pie', title:'Lançamentos por categoria', groupBy:'categoria', agg:'sum', signed:false });
+      }
+      if (m.tipo === 'monthlyReceivedChart' && !widgets.some(function(w){ return w.type === 'bar' && w.groupBy === 'mes'; })){
+        widgets.push({ type:'bar', title:'Recebidos por mês', groupBy:'mes', agg:'sum', signed:false, filtro:{ tipo:'entrada', status:'pago' } });
+      }
+    });
+    return widgets;
+  }
+
+  async function gerarRascunhoIA(){
+    var pedido = document.getElementById('ia-pedido').value.trim();
+    if (!pedido){
+      aviso('Descreva o que você quer mudar antes de gerar o rascunho.', 'error', 'Pedido vazio');
+      return;
+    }
+
+    // Ponto de troca para IA real:
+    // iaRascunhoAtual = await apiPost('/ia/rascunho', { projeto: projetoAtual(), pedido: pedido });
+    try{
+      iaRascunhoAtual = await apiPost('/ia/rascunho', { projeto: projetoAtual(), pedido: pedido });
+    }catch(e){
+      iaRascunhoAtual = gerarRascunhoLocal(pedido);
+    }
+    renderRascunhoIA(iaRascunhoAtual);
+  }
+
+  function ajustarRascunhoIA(){
+    document.getElementById('ia-assistente-flutuante').hidden = false;
+    document.getElementById('ia-flutuante-backdrop').hidden = false;
+    document.getElementById('ia-pedido').focus();
+  }
+
+  function alternarAssistenteIA(){
+    var painel = document.getElementById('ia-assistente-flutuante');
+    painel.hidden = !painel.hidden;
+    document.getElementById('ia-flutuante-backdrop').hidden = painel.hidden;
+    if (!painel.hidden){
+      var p = projetoAtual();
+      var ehGenerico = p.lancamentos.length === 0 && !!p.relatorioGenerico;
+      document.getElementById('ia-generico-aviso').hidden = !ehGenerico;
+      document.getElementById('ia-pedido').focus();
+    }
+  }
+
+  function descartarRascunhoIA(){
+    iaRascunhoAtual = null;
+    document.getElementById('ia-rascunho').hidden = true;
+  }
+
+  async function aprovarRascunhoIA(){
+    if (!iaRascunhoAtual){
+      aviso('Gere um rascunho antes de publicar.', 'error', 'Sem rascunho');
+      return;
+    }
+    var rascunhoAplicado = rascunhoFiltrado(iaRascunhoAtual);
+    if (!rascunhoAplicado.mudancas.length && !rascunhoAplicado.widgets.length){
+      aviso('Nenhum item do rascunho está marcado pra aplicar. Clique nos cards que você quer incluir.', 'error', 'Nada selecionado');
+      return;
+    }
+    var p = projetoAtual();
+    var cfg = p.aiConfig || {};
+    var widgets = widgetsDoRascunho(rascunhoAplicado);
+    if (widgets.length){
+      cfg.widgets = (cfg.widgets || []).concat(widgets.filter(function(w){
+        return !(cfg.widgets || []).some(function(existente){
+          return existente.type === w.type && existente.groupBy === w.groupBy &&
+            (existente.agg || 'sum') === (w.agg || 'sum') && !!existente.signed === !!w.signed &&
+            (existente.campo || '') === (w.campo || '');
+        });
+      }));
+    }
+    rascunhoAplicado.mudancas.forEach(function(m){
+      if (m.tipo === 'statusControl') cfg.statusControl = true;
+      if (m.tipo === 'monthlyReceivedChart') cfg.monthlyReceivedChart = true;
+      if (m.tipo === 'pieCategoryChart') cfg.pieCategoryChart = true;
+      if (m.tipo === 'monthFilter') cfg.monthFilter = true;
+      if (m.tipo === 'tableColumnToggle'){
+        cfg.tableColumnToggle = true;
+        cfg.tableColumns = cfg.tableColumns || { data:true, descricao:true, categoria:true, tipo:true, status:true, valor:true };
+      }
+      if (m.tipo === 'sortTable') cfg.sortTable = { field: m.field || 'valor', direction: m.direction || 'desc' };
+    });
+    aplicarRemocoesWidgets(cfg, rascunhoAplicado);
+    p.aiConfig = cfg;
+    salvarAIConfig(p.id, cfg);
+
+    try{
+      var resp = await apiPost('/projetos/publicar', { id: p.id });
+      Object.assign(p, normalizarProjeto(resp));
+    }catch(e){ return; }
+
+    atualizarSidebarPill();
+    renderTudo();
+    renderHome();
+    renderRascunhoIA(iaRascunhoAtual);
+    aviso('Rascunho aprovado e publicado como v' + p.versao + '.', 'success', 'Versão publicada');
+    mostrarTela('relatorios');
+  }
+
+  // ---------- assistente único de importação (detecta qualquer estrutura) ----------
+  var wizardRows = [];
+  var wizardColunasInfo = [];
+  var wizardArquivoNome = '';
+
+  function pareceNumero(v){
+    if (v === '' || v === null || v === undefined) return false;
+    var n = Number(String(v).replace(/\./g,'').replace(',', '.'));
+    if (!isNaN(Number(v))) return true;
+    return !isNaN(n);
+  }
+
+  function inferirTipoColuna(nome, valores){
+    var nomeLower = nome.toLowerCase();
+    if (nomeLower.indexOf('data') > -1 || nomeLower.indexOf('date') > -1) return 'data';
+    var amostra = valores.filter(function(v){ return v !== '' && v !== null && v !== undefined; }).slice(0, 20);
+    if (amostra.length === 0) return 'texto';
+    var numericos = amostra.filter(pareceNumero).length;
+    if (numericos / amostra.length >= 0.7) return 'número';
+    return 'texto';
+  }
+
+  function pareceLancamentoAluguel(colunas){
+    var texto = colunas.join(' ').toLowerCase();
+    var temData = /data/.test(texto);
+    var temDescricao = /descri/.test(texto);
+    var temCategoria = /categoria/.test(texto);
+    var temTipo = /\btipo\b/.test(texto);
+    var temValor = /valor/.test(texto);
+    return temData && temDescricao && temCategoria && temTipo && temValor;
+  }
+
+  async function wizardImportarComoLancamentos(){
+    var importados = 0, erros = 0;
+    var p = projetoAtual();
+    for (var idx = 0; idx < wizardRows.length; idx++){
+      var r = wizardRows[idx];
+      var linha = {};
+      Object.keys(r).forEach(function(k){ linha[k.toLowerCase().trim()] = r[k]; });
+
+      var valor = parseFloat(String(linha['valor']).replace(',', '.'));
+      var tipoRaw = (linha['tipo'] || '').toString().toLowerCase();
+      var tipo = tipoRaw.indexOf('sa') === 0 ? 'saida' : 'entrada';
+      var descricao = linha['descrição'] || linha['descricao'];
+
+      if (!descricao || isNaN(valor)){ erros++; continue; }
+      try{
+        var resp = await apiPost('/lancamentos/criar', {
+          projeto_id: p.id,
+          data: linha['data'] ? String(linha['data']) : new Date().toISOString().slice(0,10),
+          descricao: descricao,
+          categoria: linha['categoria'] || 'Sem categoria',
+          tipo: tipo,
+          valor: valor,
+          status: 'pago'
+        });
+        p.lancamentos.push(normalizarLancamento(resp));
+        importados++;
+      }catch(e){ erros++; }
+    }
+
+    renderTudo();
+    renderHome();
+    wizardReiniciar();
+    mostrarTela('relatorios');
+    aviso(importados + ' lançamento(s) importado(s) pra "' + p.nome + '"' + (erros ? ', ' + erros + ' ignorado(s) por falta de dado.' : '.'), 'success', 'Importação concluída');
+  }
+
+  function chutarNegocio(colunas){
+    var texto = colunas.join(' ').toLowerCase();
+    if (/valor|preço|preco|total|venda|receita|custo/.test(texto)) return 'Controle financeiro';
+    if (/estoque|produto|quantidade|sku/.test(texto)) return 'Controle de estoque';
+    if (/aluguel|inquilino|imovel|imóvel/.test(texto)) return 'Controle de aluguel';
+    if (/cliente|contato|telefone|email/.test(texto)) return 'Lista de clientes';
+    return 'Seus dados importados';
+  }
+
+  async function atualizarRelatorioGenerico(p){
+    try{
+      var resp = await api('/projetos/relatorio-generico?projeto_id=' + p.id);
+      p.relatorioGenerico = (resp && resp.linhas && resp.linhas.length) ? resp : null;
+    }catch(e){ p.relatorioGenerico = null; }
+  }
+
+  function mostrarColunasDetectadas(rows){
+    wizardRows = rows;
+    var colunas = Object.keys(rows[0]);
+    wizardColunasInfo = colunas.map(function(c){
+      var valores = rows.map(function(r){ return r[c]; });
+      return { nome:c, tipo: inferirTipoColuna(c, valores), exemplo: valores.filter(function(v){return v!=='';})[0] || '' };
+    });
+
+    var tbody = document.getElementById('wizard-colunas');
+    tbody.innerHTML = wizardColunasInfo.map(function(c){
+      return '<tr><td>' + c.nome + '</td><td><span class="chip">' + c.tipo + '</span></td><td>' + c.exemplo + '</td></tr>';
+    }).join('');
+
+    document.getElementById('wizard-negocio').value = chutarNegocio(colunas);
+    document.getElementById('wizard-atalho-lancamentos').hidden = !pareceLancamentoAluguel(colunas);
+    document.getElementById('wizard-step-0').hidden = true;
+    document.getElementById('wizard-step-1').hidden = false;
+  }
+
+  function wizardParse(ev){
+    var file = ev.target.files[0];
+    if (!file) return;
+    wizardArquivoNome = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = new Uint8Array(e.target.result);
+        var wb = XLSX.read(data, {type:'array'});
+        var sheet = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+        if (rows.length === 0){ aviso('Planilha vazia ou não reconhecida.', 'error', 'Arquivo inválido'); return; }
+        mostrarColunasDetectadas(rows);
+      }catch(err){
+        aviso('Não consegui ler esse arquivo. Confira se é um .xlsx válido.', 'error', 'Arquivo inválido');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function wizardConfirmarEstrutura(){
+    document.getElementById('wizard-step-1').hidden = true;
+    document.getElementById('wizard-step-2').hidden = false;
+  }
+
+  function wizardAjustar(){
+    document.getElementById('wizard-step-3').hidden = true;
+    document.getElementById('wizard-step-2').hidden = false;
+  }
+
+  function renderizarPreviaGenerica(colunasInfo, rows, pedido, ids){
+    var numericas = colunasInfo.filter(function(c){ return ehTipoNumero(c.tipo); });
+    var textos = colunasInfo.filter(function(c){ return c.tipo === 'texto'; });
+
+    // se o pedido mencionar o nome de uma coluna, prioriza ela em vez do
+    // primeiro texto/número encontrado — assim "ajustar pedido" muda o resultado de verdade
+    pedido = (pedido || '').toLowerCase();
+    var textoMencionado = textos.find(function(c){ return pedido.indexOf(c.nome.toLowerCase()) > -1; });
+    var numMencionado = numericas.find(function(c){ return pedido.indexOf(c.nome.toLowerCase()) > -1; });
+    if (textoMencionado){ textos = [textoMencionado].concat(textos.filter(function(c){return c!==textoMencionado;})); }
+    if (numMencionado){ numericas = [numMencionado].concat(numericas.filter(function(c){return c!==numMencionado;})); }
+
+    // KPIs: soma de cada coluna numérica
+    var kpisEl = document.getElementById(ids.kpis);
+    kpisEl.innerHTML = numericas.slice(0,4).map(function(c){
+      var soma = rows.reduce(function(s,r){ var n = Number(String(r[c.nome]).replace(',','.')); return s + (isNaN(n)?0:n); }, 0);
+      var pareceMoeda = /valor|preço|preco|total|venda|receita|custo/i.test(c.nome);
+      var val = pareceMoeda ? fmtBRL(soma) : soma.toLocaleString('pt-BR');
+      return '<div class="kpi"><div class="lab">Soma de ' + c.nome + '</div><div class="val tabular">' + val + '</div></div>';
+    }).join('') || '<div class="kpi"><div class="lab">Linhas importadas</div><div class="val tabular">' + rows.length + '</div></div>';
+
+    // gráfico: agrupa pela primeira coluna de texto, somando a primeira numérica
+    var catTitle = document.getElementById(ids.chartTitle);
+    var catEl = document.getElementById(ids.chart);
+    if (textos.length > 0 && numericas.length > 0){
+      var colCat = textos[0].nome, colNum = numericas[0].nome;
+      catTitle.textContent = colNum + ' por ' + colCat;
+      var grupos = {};
+      rows.forEach(function(r){
+        var chave = r[colCat] || '(vazio)';
+        var n = Number(String(r[colNum]).replace(',','.'));
+        grupos[chave] = (grupos[chave] || 0) + (isNaN(n)?0:n);
+      });
+      var max = Math.max.apply(null, Object.keys(grupos).map(function(k){return grupos[k];}).concat([1]));
+      catEl.innerHTML = Object.keys(grupos).slice(0,10).map(function(k){
+        var pct = Math.round(grupos[k] / max * 100);
+        return '<div class="catbar-row"><span>' + k + '</span>' +
+          '<span class="catbar-track"><span class="catbar-fill" style="width:' + pct + '%"></span></span>' +
+          '<span class="tabular" style="text-align:right">' + grupos[k].toLocaleString('pt-BR') + '</span></div>';
+      }).join('');
+    } else {
+      catTitle.textContent = 'Sem coluna numérica + categórica pra agrupar';
+      catEl.innerHTML = '<div class="wizard-example">Essa planilha não tem uma combinação óbvia de categoria + número — no fluxo real, o Claude decidiria o melhor gráfico olhando os dados de verdade.</div>';
+    }
+
+    // tabela completa (limitada a 50 linhas na tela)
+    var colunas = colunasInfo.map(function(c){ return c.nome; });
+    document.getElementById(ids.thead).innerHTML = '<tr>' + colunas.map(function(c){ return '<th>'+c+'</th>'; }).join('') + '</tr>';
+    var linhasMostradas = rows.slice(0, 50);
+    document.getElementById(ids.tbody).innerHTML = linhasMostradas.map(function(r){
+      return '<tr>' + colunas.map(function(c){ return '<td>' + r[c] + '</td>'; }).join('') + '</tr>';
+    }).join('');
+    document.getElementById(ids.truncado).textContent = rows.length > 50
+      ? 'Mostrando 50 de ' + rows.length + ' linhas.' : '';
+  }
+
+  // comparação tolerante: o charset da conexão n8n->MySQL corrompe acentos
+  // ao gravar (ex: "número" vira "n?mero"/"n�mero") — ver memória do projeto.
+  // Até isso ser corrigido na credencial do n8n, casamos por regex em vez de igualdade exata.
+  function ehTipoNumero(tipo){
+    var limpo = (tipo || '').replace(/[^a-zA-Z]/g, '').toLowerCase();
+    return limpo === 'nmero' || limpo === 'numero';
+  }
+
+  function widgetPadraoGenerico(colunas){
+    var textos = colunas.filter(function(c){ return c.tipo === 'texto'; });
+    var numericas = colunas.filter(function(c){ return ehTipoNumero(c.tipo); });
+    if (!textos.length || !numericas.length) return null;
+    var campo = numericas[0];
+    // somar uma taxa/porcentagem de linhas diferentes não faz sentido (ex: "200% de progresso") — usa média nesse caso
+    var pareceTaxa = /%|percentual|percent|taxa/i.test(campo.nome);
+    var agg = pareceTaxa ? 'avg' : 'sum';
+    var titulo = (pareceTaxa ? 'Média de ' + campo.nome : campo.nome) + ' por ' + textos[0].nome;
+    return { type:'bar', title: titulo, groupBy: textos[0].nome, agg: agg, campo: campo.nome };
+  }
+
+  function agregarWidgetGenerico(linhas, widget){
+    var grupos = {};
+    linhas.forEach(function(r){
+      var chave = r[widget.groupBy] || ('Sem ' + widget.groupBy);
+      var n = Number(String(r[widget.campo]).replace(',', '.'));
+      if (!grupos[chave]) grupos[chave] = { total:0, count:0 };
+      grupos[chave].total += isNaN(n) ? 0 : n;
+      grupos[chave].count += 1;
+    });
+    var agg = widget.agg || 'sum';
+    var resultado = {};
+    Object.keys(grupos).forEach(function(k){
+      var g = grupos[k];
+      resultado[k] = agg === 'avg' ? (g.count ? g.total / g.count : 0) : agg === 'count' ? g.count : g.total;
+    });
+    return resultado;
+  }
+
+  function formatarValorGenerico(v, widget){
+    if (widget.agg === 'count') return v.toLocaleString('pt-BR');
+    var pareceMoeda = /valor|preço|preco|total|venda|receita|custo/i.test(widget.campo || '');
+    return pareceMoeda ? fmtBRL(v) : v.toLocaleString('pt-BR');
+  }
+
+  function renderWidgetGenerico(widget, opts){
+    var p = projetoAtual();
+    var grupos = agregarWidgetGenerico(p.relatorioGenerico.linhas, widget);
+    var formatValue = function(v){ return formatarValorGenerico(v, widget); };
+    var body;
+    if (widget.type === 'pie'){
+      body = renderDonut(grupos, formatValue);
+    } else {
+      var keys = Object.keys(grupos).sort(function(a,b){ return Math.abs(grupos[b]) - Math.abs(grupos[a]); });
+      body = renderCatBarList(grupos, keys, function(k){ return k; }, formatValue);
+    }
+    var removeBtn = (opts && opts.removable)
+      ? '<button class="btn-icon-ghost" onclick="removerWidgetAI(\'' + widget._source + '\', ' + (widget._index != null ? widget._index : 'null') + ')" title="Remover este gráfico">✕</button>'
+      : '';
+    return '<div class="widget-card"><div class="widget-card-head"><h3>' + (widget.title || 'Gráfico') + '</h3>' + removeBtn + '</div>' + body + '</div>';
+  }
+
+  function renderRelatorioGenerico(){
+    var p = projetoAtual();
+    var painel = document.getElementById('relatorio-generico-panel');
+    var financeiro = document.getElementById('relatorio-financeiro');
+    if (p.lancamentos.length > 0 || !p.relatorioGenerico){
+      painel.hidden = true;
+      financeiro.hidden = false;
+      return;
+    }
+    financeiro.hidden = true;
+    painel.hidden = false;
+
+    var cfg = p.aiConfig || {};
+    if (cfg.widgets === undefined){
+      var padrao = widgetPadraoGenerico(p.relatorioGenerico.colunas);
+      cfg.widgets = padrao ? [padrao] : [];
+      p.aiConfig = cfg;
+      salvarAIConfig(p.id, cfg);
+    }
+    var widgets = cfg.widgets.map(function(w, i){ return Object.assign({ _source:'widgets', _index:i }, w); });
+
+    var numericas = p.relatorioGenerico.colunas.filter(function(c){ return ehTipoNumero(c.tipo); });
+    document.getElementById('rg-kpis').innerHTML = numericas.slice(0,4).map(function(c){
+      var soma = p.relatorioGenerico.linhas.reduce(function(s,r){ var n = Number(String(r[c.nome]).replace(',','.')); return s + (isNaN(n)?0:n); }, 0);
+      var pareceMoeda = /valor|preço|preco|total|venda|receita|custo/i.test(c.nome);
+      var val = pareceMoeda ? fmtBRL(soma) : soma.toLocaleString('pt-BR');
+      return '<div class="kpi"><div class="lab">Soma de ' + c.nome + '</div><div class="val tabular">' + val + '</div></div>';
+    }).join('') || '<div class="kpi"><div class="lab">Linhas importadas</div><div class="val tabular">' + p.relatorioGenerico.linhas.length + '</div></div>';
+
+    document.getElementById('rg-widgets').innerHTML = widgets.length
+      ? '<div class="widget-grid">' + widgets.map(function(w){ return renderWidgetGenerico(w, { removable:true }); }).join('') + '</div>'
+      : '<div class="wizard-example">Nenhum gráfico configurado ainda.</div>';
+
+    var colunas = p.relatorioGenerico.colunas.map(function(c){ return c.nome; });
+    document.getElementById('rg-thead').innerHTML = '<tr>' + colunas.map(function(c){ return '<th>'+c+'</th>'; }).join('') + '</tr>';
+    var linhasMostradas = p.relatorioGenerico.linhas.slice(0, 50);
+    document.getElementById('rg-tbody').innerHTML = linhasMostradas.map(function(r){
+      return '<tr>' + colunas.map(function(c){ return '<td>' + (r[c] === undefined ? '' : r[c]) + '</td>'; }).join('') + '</tr>';
+    }).join('');
+    document.getElementById('rg-truncado').textContent = p.relatorioGenerico.linhas.length > 50
+      ? 'Mostrando 50 de ' + p.relatorioGenerico.linhas.length + ' linhas.' : '';
+  }
+
+  function wizardGerar(){
+    var pedido = document.getElementById('wizard-prompt').value || '';
+    renderizarPreviaGenerica(wizardColunasInfo, wizardRows, pedido, {
+      kpis: 'wizard-kpis', chartTitle: 'wizard-chart-title', chart: 'wizard-catbar',
+      thead: 'wizard-thead', tbody: 'wizard-tbody', truncado: 'wizard-truncado'
+    });
+
+    document.getElementById('wizard-step-2').hidden = true;
+    document.getElementById('wizard-step-3').hidden = false;
+  }
+
+  async function wizardConfirmar(){
+    var p = projetoAtual();
+    try{
+      if (wizardRows && wizardRows.length){
+        await apiPost('/importar', {
+          projeto_id: p.id,
+          arquivo_original: wizardArquivoNome,
+          importado_por: usuarioAtual ? usuarioAtual.nome : '',
+          colunas: wizardColunasInfo,
+          linhas: wizardRows
+        });
+      }
+      var resp = await apiPost('/projetos/publicar', { id: p.id });
+      Object.assign(p, normalizarProjeto(resp));
+      var l = await api('/lancamentos?projeto_id=' + p.id);
+      p.lancamentos = comoLista(l).map(normalizarLancamento);
+      await atualizarRelatorioGenerico(p);
+    }catch(e){ return; }
+    atualizarSidebarPill();
+    renderTudo();
+    renderHome();
+    aviso('Confirmado — simula virar a próxima versão deste projeto. No fluxo real, isso dispara o publicar de verdade (troca current → v' + p.versao + ' dentro de /apps/' + p.slug + '/versions/v' + p.versao + ' na VPS).', 'success', 'Versão publicada');
+  }
+
+  function wizardReiniciar(){
+    wizardRows = [];
+    wizardColunasInfo = [];
+    document.getElementById('wizard-input').value = '';
+    document.getElementById('wizard-prompt').value = '';
+    document.getElementById('wizard-step-3').hidden = true;
+    document.getElementById('wizard-step-0').hidden = false;
+  }
+
+  restaurarSessao();
+</script>
+</body>
+</html>
