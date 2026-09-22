@@ -9,6 +9,9 @@ import OrganizadorDashboard from "@/components/ia/OrganizadorDashboard";
 import type { Lancamento } from "@/lib/lancamentos";
 import type { RelatorioGenerico } from "@/lib/relatorioGenerico";
 import { capturarDashboard } from "@/lib/dashboardSnapshot";
+import { analisarLancamentos } from "@/lib/analiseFinanceira";
+import { analisarFrequencia } from "@/lib/analiseGenerica";
+import { ehTipoNumero } from "@/lib/planilha";
 import {
   type Widget,
   carregarAIConfig,
@@ -68,6 +71,8 @@ export default function PainelIA({
   const [carregando, setCarregando] = useState(false);
   const [itens, setItens] = useState<ItemRascunho[] | null>(null);
   const [infos, setInfos] = useState<MudancaIA[]>([]);
+  const [aba, setAba] = useState<"analise" | "dashboard">("analise");
+  const [analise, setAnalise] = useState("");
 
   useEffect(() => {
     const cfg = carregarAIConfig(projetoId);
@@ -143,15 +148,30 @@ export default function PainelIA({
     }
     setCarregando(true);
     try {
-      const pedidoNormalizado = normalizar(pedido);
-      if (/lancamento/.test(pedidoNormalizado) && /adicion|inclu|mostr|habilit|ativ|quero|remov|ocult|escond/.test(pedidoNormalizado)) {
-        const habilitar = !/remov|ocult|escond|desativ/.test(pedidoNormalizado);
-        setItens([{ kind: "lancamento", habilitar, selecionado: true }]);
+      if (aba === "analise" && modo === "financeiro") {
+        setAnalise(analisarLancamentos(lancamentos ?? [], pedido));
+        setItens(null);
         setInfos([]);
         return;
       }
-      if (relatorioGenerico && /filtr|pesquis|busca/.test(normalizar(pedido)) && /tabela|lista|dados|planilha/.test(normalizar(pedido))) {
+      if (aba === "analise" && relatorioGenerico) {
+        const resposta = analisarFrequencia(relatorioGenerico, pedido);
+        if (resposta) {
+          setAnalise(resposta);
+          setItens(null);
+          setInfos([]);
+          return;
+        }
+      }
+      const pedidoNormalizado = normalizar(pedido);
+      if (/filtr|pesquis|busca/.test(pedidoNormalizado) && (modo === "financeiro" || /tabela|lista|dados|planilha/.test(pedidoNormalizado))) {
         setItens([{ kind: "filtro", selecionado: true }]);
+        setInfos([]);
+        return;
+      }
+      if (/lancamento/.test(pedidoNormalizado) && /adicion|inclu|mostr|habilit|ativ|quero|remov|ocult|escond/.test(pedidoNormalizado)) {
+        const habilitar = !/remov|ocult|escond|desativ/.test(pedidoNormalizado);
+        setItens([{ kind: "lancamento", habilitar, selecionado: true }]);
         setInfos([]);
         return;
       }
@@ -183,16 +203,31 @@ export default function PainelIA({
         .filter((m) => m.tipo === "removerWidget" && m.widgetTitle)
         .map((m) => ({ kind: "remocao", titulo: m.widgetTitle as string, selecionado: true }));
       const tiposSelecionados = new Set<Widget["type"]>();
-      const novosWidgets: ItemRascunho[] = (dados.widgets ?? []).map((w) => {
+      const colunasValidas = modo === "financeiro"
+        ? new Set(["categoria", "tipo", "status", "mes", "data", "descricao"])
+        : new Set(relatorioGenerico?.colunas.map((c) => c.nome) ?? []);
+      const camposNumericos = new Set(relatorioGenerico?.colunas.filter((c) => ehTipoNumero(c.tipo)).map((c) => c.nome) ?? []);
+      const widgetsValidos = (dados.widgets ?? []).filter((w) =>
+        (w.type === "bar" || w.type === "pie") &&
+        (w.agg === "sum" || w.agg === "avg" || w.agg === "count") &&
+        colunasValidas.has(w.groupBy) &&
+        (modo === "financeiro" ? (!w.campo || w.campo === "valor") : (w.agg === "count" || !!w.campo && camposNumericos.has(w.campo)))
+      );
+      if (widgetsValidos.length < (dados.widgets ?? []).length) {
+        aviso("Sugestões com colunas inexistentes foram ignoradas.", "info");
+      }
+      const novosWidgets: ItemRascunho[] = widgetsValidos.map((w) => {
         const selecionado = !tiposSelecionados.has(w.type);
         tiposSelecionados.add(w.type);
         return { kind: "widget", ref: w, selecionado };
       });
       const novosItens = [...remocoes, ...novosWidgets];
       const analises = mudancas.filter((m) => m.tipo === "analysisOnly");
-      setItens(novosItens.length ? novosItens : null);
+      setItens(aba === "dashboard" && novosItens.length ? novosItens : null);
       setInfos(analises);
-      if (!novosItens.length) {
+      if (aba === "analise") {
+        setAnalise(analises.map((m) => m.descricao || m.titulo || "").filter(Boolean).join("\n\n") || "Não encontrei uma análise para esse pedido.");
+      } else if (!novosItens.length) {
         aviso(analises[0]?.descricao || "A IA não sugeriu uma alteração para esse pedido. Tente descrever o que deseja filtrar ou mostrar.", "info", "Nenhuma sugestão");
       }
     } catch (err) {
@@ -334,7 +369,7 @@ export default function PainelIA({
           />
           <div className="fixed bottom-4 right-4 z-40 flex max-h-[calc(100vh-2rem)] w-[min(1040px,calc(100vw-2rem))] flex-col rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-elevated)] sm:bottom-6 sm:right-6">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Ajustar dashboard com IA</h3>
+              <h3 className="text-sm font-semibold">Assistente de dados</h3>
               <button
                 onClick={() => setPainelAberto(false)}
                 className="rounded-md px-1.5 py-0.5 text-text-faint hover:bg-surface-2"
@@ -349,12 +384,17 @@ export default function PainelIA({
               </p>
             )}
 
+            <div className="mb-3 flex gap-1 border-b border-border" role="tablist" aria-label="Modo do assistente">
+              <button type="button" role="tab" aria-selected={aba === "analise"} onClick={() => { setAba("analise"); setItens(null); }} className={`px-3 py-2 text-sm ${aba === "analise" ? "border-b-2 border-accent font-semibold text-accent" : "text-text-muted"}`}>Analisar dados</button>
+              <button type="button" role="tab" aria-selected={aba === "dashboard"} onClick={() => { setAba("dashboard"); setAnalise(""); }} className={`px-3 py-2 text-sm ${aba === "dashboard" ? "border-b-2 border-accent font-semibold text-accent" : "text-text-muted"}`}>Ajustar dashboard</button>
+            </div>
+
             <div className="mb-3 overflow-y-auto">
               <textarea
                 value={pedido}
                 onChange={(e) => setPedido(e.target.value)}
                 rows={3}
-                placeholder="Ex: mostra um gráfico de pizza por categoria"
+                placeholder={aba === "analise" ? "Ex: analise os lançamentos deste mês" : "Ex: mostre um gráfico por categoria"}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text"
               />
               <button
@@ -362,12 +402,14 @@ export default function PainelIA({
                 disabled={carregando}
                 className="mt-2 w-full rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
               >
-                {carregando ? <span className="inline-flex items-center gap-2"><LoaderCircle size={16} className="animate-spin" /> IA gerando retorno...</span> : "Gerar rascunho"}
+                {carregando ? <span className="inline-flex items-center gap-2"><LoaderCircle size={16} className="animate-spin" /> Analisando...</span> : aba === "analise" ? "Analisar" : "Gerar rascunho"}
               </button>
 
               {carregando && <p role="status" className="mt-2 text-center text-xs text-text-muted">Analisando seu pedido e preparando as sugestões</p>}
 
-              {itens && (
+              {aba === "analise" && analise && <div role="status" className="mt-4 whitespace-pre-line rounded-md border border-border bg-surface-2 p-4 text-sm leading-6 text-text">{analise}</div>}
+
+              {aba === "dashboard" && itens && (
                 <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(240px,0.8fr)_minmax(0,1.2fr)]">
                   <div className="order-2 min-w-0">
                     <div className="mb-2 flex items-center justify-between gap-2">
@@ -398,7 +440,7 @@ export default function PainelIA({
                           <div className="mb-2 text-sm font-semibold">Filtros na tabela</div>
                           <div className="grid gap-2 text-xs text-text-muted sm:grid-cols-2">
                             <div className="rounded border border-border bg-surface-2 px-3 py-2">Buscar em todas as colunas</div>
-                            {(relatorioGenerico?.colunas ?? []).filter((c) => c.tipo === "texto" && !/email|e-mail/i.test(c.nome)).slice(0, 3).map((c) => (
+                            {(modo === "financeiro" ? [{ nome: "Categoria" }, { nome: "Tipo" }, { nome: "Status" }] : (relatorioGenerico?.colunas ?? []).filter((c) => c.tipo === "texto" && !/email|e-mail/i.test(c.nome)).slice(0, 3)).map((c) => (
                               <div key={c.nome} className="rounded border border-border bg-surface-2 px-3 py-2">{c.nome}: Todos</div>
                             ))}
                           </div>

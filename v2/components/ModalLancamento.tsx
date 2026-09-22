@@ -111,24 +111,24 @@ export default function ModalLancamento({
           <form
             onClick={(e) => e.stopPropagation()}
             onSubmit={salvar}
-            className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-[var(--shadow-elevated)]"
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-elevated)] sm:p-6"
           >
             <h3 className="mb-4 text-lg font-semibold">
               {editando ? "Editar lançamento" : "Novo lançamento"}
             </h3>
 
-            <div className="mb-3 grid grid-cols-2 gap-3">
-              <label className="text-xs text-text-muted">
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="block min-w-0 text-xs text-text-muted">
                 Data
                 <input
                   type="date"
                   value={data}
                   onChange={(e) => setData(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text"
+                  className="mt-1 block min-w-0 w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-text"
                   required
                 />
               </label>
-              <label className="text-xs text-text-muted">
+              <label className="block min-w-0 text-xs text-text-muted">
                 Valor
                 <input
                   type="number"
@@ -136,52 +136,52 @@ export default function ModalLancamento({
                   min="0"
                   value={valor}
                   onChange={(e) => setValor(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text"
+                  className="mt-1 block min-w-0 w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-text"
                   required
                 />
               </label>
             </div>
 
-            <label className="mb-3 block text-xs text-text-muted">
+            <label className="mb-3 block min-w-0 text-xs text-text-muted">
               Descrição
               <input
                 type="text"
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text"
+                className="mt-1 block min-w-0 w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-text"
                 required
               />
             </label>
 
-            <label className="mb-3 block text-xs text-text-muted">
+            <label className="mb-3 block min-w-0 text-xs text-text-muted">
               Categoria
               <input
                 type="text"
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text"
+                className="mt-1 block min-w-0 w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-text"
                 required
               />
             </label>
 
-            <div className="mb-5 grid grid-cols-2 gap-3">
-              <label className="text-xs text-text-muted">
+            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="block min-w-0 text-xs text-text-muted">
                 Tipo
                 <select
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value as "entrada" | "saida")}
-                  className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text"
+                  className="mt-1 block min-w-0 w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-text"
                 >
                   <option value="entrada">Entrada</option>
                   <option value="saida">Saída</option>
                 </select>
               </label>
-              <label className="text-xs text-text-muted">
+              <label className="block min-w-0 text-xs text-text-muted">
                 Status
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as "pendente" | "pago")}
-                  className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text"
+                  className="mt-1 block min-w-0 w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-text"
                 >
                   <option value="pago">Pago</option>
                   <option value="pendente">Pendente</option>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sessaoAtual } from "@/lib/session";
-import { buscarProjetoPorSlug } from "@/lib/lancamentos";
+import { buscarProjetoPorSlug, listarLancamentos } from "@/lib/lancamentos";
 import { buscarRelatorioGenerico } from "@/lib/relatorioGenerico";
 import type { Widget } from "@/lib/widgets";
 
@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
   if (!projeto) return NextResponse.json({ erro: "Projeto não encontrado" }, { status: 404 });
 
   const relatorioGenerico = await buscarRelatorioGenerico(projeto.id);
+  const lancamentos = await listarLancamentos(projeto.id);
 
   const payload = {
     pedido,
@@ -27,6 +28,10 @@ export async function POST(req: NextRequest) {
       nome: projeto.nome,
       aiConfig: { widgets: (widgetsAtuais as Widget[]) ?? [] },
       ...(relatorioGenerico ? { relatorioGenerico } : {}),
+      ...(lancamentos.length ? { financeiro: {
+        colunas: ["data", "descricao", "categoria", "tipo", "valor", "status"],
+        lancamentos: lancamentos.map(({ data, descricao, categoria, tipo, valor, status }) => ({ data, descricao, categoria, tipo, valor, status })),
+      } } : {}),
     },
   };
 
