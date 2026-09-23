@@ -15,25 +15,25 @@ export default async function PaginaInicio() {
   const projetos = await listarProjetos(sessao.id, sessao.papel);
 
   return (
-    <div className="mx-auto w-full max-w-6xl p-6">
-      <header className="mb-6">
-        <h1 className="text-lg font-bold">Olá, {sessao.nome}</h1>
+    <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:p-6">
+      <header className="mb-5 sm:mb-6">
+        <h1 className="break-words text-lg font-bold">Olá, {sessao.nome}</h1>
         <p className="text-sm text-text-muted">Seus projetos</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {projetos.map((p) => (
           <a
             key={p.id}
             href={`/relatorios/${p.slug}`}
-            className="relative rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-soft)] transition hover:border-accent hover:shadow-md"
+            className="relative min-w-0 rounded-lg border border-border bg-surface p-4 shadow-[var(--shadow-soft)] transition hover:border-accent hover:shadow-md"
           >
             <ExcluirProjeto id={p.id} nome={p.nome} />
-            <div className="font-semibold">{p.nome}</div>
+            <div className="break-words pr-6 font-semibold">{p.nome}</div>
             <div className="mb-2 text-xs text-text-faint">{p.tipo}</div>
             {p.descricao && <p className="mb-3 line-clamp-2 min-h-10 text-sm text-text-muted">{p.descricao}</p>}
             {p.tem_lancamentos > 0 && (
-              <div className="mb-3 text-xl font-bold tabular-nums">{fmtBRL(p.saldo)}</div>
+              <div className="mb-3 break-words text-xl font-bold tabular-nums">{fmtBRL(p.saldo)}</div>
             )}
             <span
               className="inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"

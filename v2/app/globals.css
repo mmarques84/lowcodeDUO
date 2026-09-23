@@ -52,6 +52,17 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+
+@media (max-width: 767px) {
+  .app-sidebar-desktop { display: none !important; }
+  .app-mobile-header { display: flex !important; }
+}
+
+@media (min-width: 768px) {
+  .app-sidebar-desktop { display: flex !important; }
+  .app-mobile-header { display: none !important; }
+}
+
 @media print {
   @page { size: A4; margin: 16mm; }
   body, main { background: white !important; color: #0f172a !important; }

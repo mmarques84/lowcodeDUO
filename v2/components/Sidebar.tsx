@@ -133,11 +133,11 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
+      <aside className="app-sidebar-desktop hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
         {conteudo}
       </aside>
 
-      <header className="print-hide fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface px-4 md:hidden">
+      <header className="app-mobile-header print-hide fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface px-4 md:hidden">
         <Link href="/" className="flex min-w-0 items-center gap-2" onClick={() => setMenuAberto(false)}>
           <Image src="/brand-mark.svg" alt="" width={28} height={28} className="h-7 w-7 shrink-0" />
           <span className="truncate text-sm font-bold">{projetoAtual?.nome ?? "lowcodeDUO"}</span>
