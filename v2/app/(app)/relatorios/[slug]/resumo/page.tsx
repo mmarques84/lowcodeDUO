@@ -13,6 +13,7 @@ export default async function PaginaResumo({ params }: { params: Promise<{ slug:
   const lancamentos = await listarLancamentos(projeto.id);
   const relatorio = lancamentos.length ? null : await buscarRelatorioGenerico(projeto.id);
   return <ResumoCompartilhavel
+    projetoSlug={slug}
     projetoNome={projeto.nome}
     colunas={lancamentos.length ? [{ nome: "Data", tipo: "data" }, { nome: "Categoria", tipo: "texto" }, { nome: "Tipo", tipo: "texto" }, { nome: "Valor", tipo: "numero" }] : relatorio?.colunas ?? []}
     linhas={lancamentos.length ? lancamentos.map((l) => ({ Data: l.data, Categoria: l.categoria, Tipo: l.tipo, Valor: l.valor })) : relatorio?.linhas ?? []}

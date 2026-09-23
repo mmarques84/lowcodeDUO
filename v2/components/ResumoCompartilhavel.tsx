@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Printer } from "lucide-react";
+import { Printer, Sparkles } from "lucide-react";
 import type { ColunaDetectada } from "@/lib/relatorioGenerico";
 
 function dataIso(valor: unknown): string | null {
@@ -22,13 +22,15 @@ function inicioSemanaHoje() {
   return d.toISOString().slice(0, 10);
 }
 
-export default function ResumoCompartilhavel({ projetoNome, colunas, linhas }: {
-  projetoNome: string; colunas: ColunaDetectada[]; linhas: Record<string, unknown>[];
+export default function ResumoCompartilhavel({ projetoSlug, projetoNome, colunas, linhas }: {
+  projetoSlug: string; projetoNome: string; colunas: ColunaDetectada[]; linhas: Record<string, unknown>[];
 }) {
   const datas = colunas.filter((c) => /data|date/i.test(c.nome) || c.tipo === "data");
   const [colunaData, setColunaData] = useState(datas[0]?.nome ?? "");
   const [semana, setSemana] = useState(inicioSemanaHoje);
   const [textoEditado, setTextoEditado] = useState<string | null>(null);
+  const [gerandoIA, setGerandoIA] = useState(false);
+  const [erroIA, setErroIA] = useState<string | null>(null);
   const inicio = useMemo(() => {
     const d = new Date(`${semana}T12:00:00`);
     if (Number.isNaN(d.getTime())) return semana;
@@ -64,11 +66,44 @@ export default function ResumoCompartilhavel({ projetoNome, colunas, linhas }: {
     ? `No período de ${inicio.split("-").reverse().join("/")} a ${fim.split("-").reverse().join("/")}, foram encontrados ${selecionadas.length} registros${colunaData ? ` pela coluna ${colunaData}` : " no conjunto de dados"}.${distribuicoes[0]?.valores.length ? ` O grupo mais frequente em ${distribuicoes[0].nome} foi ${distribuicoes[0].valores[0][0]}, com ${distribuicoes[0].valores[0][1]} registros.` : ""}`
     : "Nenhum registro encontrado para a semana selecionada.";
 
+  async function gerarComIA() {
+    setGerandoIA(true);
+    setErroIA(null);
+    try {
+      const resp = await fetch("/api/ia/resumo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projetoSlug,
+          periodo: { inicio, fim },
+          registros: selecionadas.length,
+          baseCompleta: linhas.length,
+          distribuicoes: distribuicoes.filter((d) => d.valores.length),
+          valoresFinanceiros,
+        }),
+      });
+      const dados = await resp.json();
+      if (!resp.ok || !dados.resumo) {
+        setErroIA(dados.erro ?? "Não consegui gerar o resumo com IA.");
+        return;
+      }
+      setTextoEditado(dados.resumo);
+    } catch {
+      setErroIA("Não consegui falar com o serviço de IA.");
+    } finally {
+      setGerandoIA(false);
+    }
+  }
+
   return <div className="print-report mx-auto w-full max-w-4xl p-6">
     <div className="print-hide mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
       <div><h1 className="text-lg font-bold">Resumo para compartilhar</h1><p className="text-sm text-text-muted">{projetoNome}</p></div>
-      <button type="button" onClick={() => window.print()} className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white"><Printer size={16} /> Imprimir / salvar PDF</button>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={gerarComIA} disabled={gerandoIA} className="flex items-center gap-2 rounded-md border border-accent px-3 py-2 text-sm font-semibold text-accent disabled:opacity-60"><Sparkles size={16} /> {gerandoIA ? "Gerando..." : "Gerar com IA"}</button>
+        <button type="button" onClick={() => window.print()} className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white"><Printer size={16} /> Imprimir / salvar PDF</button>
+      </div>
     </div>
+    {erroIA && <p className="print-hide mb-4 text-sm text-red-700">{erroIA}</p>}
     <div className="print-hide mb-8 flex flex-wrap gap-4">
       <label className="text-xs text-text-muted">Semana<input type="date" value={semana} onChange={(e) => { setSemana(e.target.value); setTextoEditado(null); }} className="mt-1 block rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" /></label>
       {datas.length > 0 && <label className="text-xs text-text-muted">Coluna de data<select value={colunaData} onChange={(e) => { setColunaData(e.target.value); setTextoEditado(null); }} className="mt-1 block rounded-md border border-border bg-surface px-3 py-2 text-sm text-text">{datas.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}</select></label>}
