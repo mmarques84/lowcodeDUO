@@ -1,8 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Printer, Sparkles } from "lucide-react";
+import { CalendarDays, ChevronDown, FileDown, Printer, RotateCcw, Share2, Sparkles, Undo2 } from "lucide-react";
 import type { ColunaDetectada } from "@/lib/relatorioGenerico";
+
+type PeriodoTipo = "semana" | "mes" | "personalizado";
+type ModoTela = "editar" | "visualizar";
+type FonteResumo = "automatico" | "ia" | "editado";
+type HistoricoResumo = { texto: string | null; fonte: FonteResumo } | null;
 
 function dataIso(valor: unknown): string | null {
   if (typeof valor === "number" && valor > 20000 && valor < 100000) {
@@ -16,61 +21,187 @@ function dataIso(valor: unknown): string | null {
   return null;
 }
 
+function isoLocal(data: Date) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+function hojeIso() {
+  return isoLocal(new Date());
+}
+
 function inicioSemanaHoje() {
-  const d = new Date();
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return d.toISOString().slice(0, 10);
+  const data = new Date();
+  data.setDate(data.getDate() - ((data.getDay() + 6) % 7));
+  return isoLocal(data);
+}
+
+function inicioMesHoje() {
+  const data = new Date();
+  data.setDate(1);
+  return isoLocal(data);
+}
+
+function moverDias(data: string, dias: number) {
+  const resultado = new Date(`${data}T12:00:00`);
+  resultado.setDate(resultado.getDate() + dias);
+  return isoLocal(resultado);
+}
+
+function formatarData(data: string, curto = false) {
+  const valor = new Date(`${data}T12:00:00`);
+  if (Number.isNaN(valor.getTime())) return data;
+  return valor.toLocaleDateString("pt-BR", curto
+    ? { day: "2-digit", month: "short" }
+    : { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function moeda(valor: number) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function calcularFinanceiro(linhas: Record<string, unknown>[]) {
+  return linhas.reduce<{ entradas: number; saidas: number }>((acc, linha) => {
+    const valor = Number(linha.Valor) || 0;
+    if (String(linha.Tipo).toLowerCase() === "entrada") acc.entradas += valor;
+    if (String(linha.Tipo).toLowerCase() === "saida") acc.saidas += valor;
+    return acc;
+  }, { entradas: 0, saidas: 0 });
 }
 
 export default function ResumoCompartilhavel({ projetoSlug, projetoNome, colunas, linhas }: {
-  projetoSlug: string; projetoNome: string; colunas: ColunaDetectada[]; linhas: Record<string, unknown>[];
+  projetoSlug: string;
+  projetoNome: string;
+  colunas: ColunaDetectada[];
+  linhas: Record<string, unknown>[];
 }) {
-  const datas = colunas.filter((c) => /data|date/i.test(c.nome) || c.tipo === "data");
+  const datas = colunas.filter((coluna) => /data|date/i.test(coluna.nome) || coluna.tipo === "data");
+  const temFinanceiro = colunas.some((coluna) => coluna.nome === "Valor") && colunas.some((coluna) => coluna.nome === "Tipo");
   const [colunaData, setColunaData] = useState(datas[0]?.nome ?? "");
-  const [semana, setSemana] = useState(inicioSemanaHoje);
-  const [textoEditado, setTextoEditado] = useState<string | null>(null);
+  const [periodoTipo, setPeriodoTipo] = useState<PeriodoTipo>("semana");
+  const [dataReferencia, setDataReferencia] = useState(inicioSemanaHoje);
+  const [inicioPersonalizado, setInicioPersonalizado] = useState(inicioSemanaHoje);
+  const [fimPersonalizado, setFimPersonalizado] = useState(hojeIso);
+  const [modo, setModo] = useState<ModoTela>("editar");
+  const [textoResumo, setTextoResumo] = useState<string | null>(null);
+  const [fonteResumo, setFonteResumo] = useState<FonteResumo>("automatico");
+  const [historicoResumo, setHistoricoResumo] = useState<HistoricoResumo>(null);
   const [gerandoIA, setGerandoIA] = useState(false);
   const [erroIA, setErroIA] = useState<string | null>(null);
+  const [exportarAberto, setExportarAberto] = useState(false);
+  const [avisoCompartilhar, setAvisoCompartilhar] = useState<string | null>(null);
+
   const inicio = useMemo(() => {
-    const d = new Date(`${semana}T12:00:00`);
-    if (Number.isNaN(d.getTime())) return semana;
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-    return d.toISOString().slice(0, 10);
-  }, [semana]);
+    if (periodoTipo === "personalizado") return inicioPersonalizado;
+    if (periodoTipo === "mes") return inicioMesHoje();
+    const data = new Date(`${dataReferencia}T12:00:00`);
+    if (Number.isNaN(data.getTime())) return dataReferencia;
+    data.setDate(data.getDate() - ((data.getDay() + 6) % 7));
+    return isoLocal(data);
+  }, [dataReferencia, inicioPersonalizado, periodoTipo]);
+
   const fim = useMemo(() => {
-    const d = new Date(`${inicio}T12:00:00`);
-    d.setDate(d.getDate() + 6);
-    return d.toISOString().slice(0, 10);
-  }, [inicio]);
-  const selecionadas = colunaData ? linhas.filter((l) => {
-    const data = dataIso(l[colunaData]);
-    return data !== null && data >= inicio && data <= fim;
-  }) : linhas;
-  const grupos = colunas.filter((c) => c.tipo === "texto" && !/nome|usuario|usuário|email|e-mail|telefone|cpf/i.test(c.nome)).slice(0, 2);
-  const distribuicoes = grupos.map((grupo) => ({
-    nome: grupo.nome,
-    valores: Object.entries(selecionadas.reduce<Record<string, number>>((acc, l) => {
-      const chave = String(l[grupo.nome] ?? "").trim() || "Sem informação";
-      acc[chave] = (acc[chave] ?? 0) + 1;
-      return acc;
-    }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8),
-  }));
-  const valoresFinanceiros = colunas.some((c) => c.nome === "Valor") && colunas.some((c) => c.nome === "Tipo")
-    ? selecionadas.reduce<{ entradas: number; saidas: number }>((acc, linha) => {
-      const valor = Number(linha.Valor) || 0;
-      if (linha.Tipo === "entrada") acc.entradas += valor;
-      if (linha.Tipo === "saida") acc.saidas += valor;
-      return acc;
-    }, { entradas: 0, saidas: 0 }) : null;
+    if (periodoTipo === "personalizado") return fimPersonalizado;
+    if (periodoTipo === "mes") return hojeIso();
+    return moverDias(inicio, 6);
+  }, [fimPersonalizado, inicio, periodoTipo]);
+
+  const periodoInvalido = inicio > fim;
+  const analise = useMemo(() => {
+    const filtrarPeriodo = (periodoInicio: string, periodoFim: string) => colunaData
+      ? linhas.filter((linha) => {
+        const data = dataIso(linha[colunaData]);
+        return data !== null && data >= periodoInicio && data <= periodoFim;
+      })
+      : linhas;
+    const selecionadas = periodoInvalido ? [] : filtrarPeriodo(inicio, fim);
+    const duracao = Math.max(1, Math.round((new Date(`${fim}T12:00:00`).getTime() - new Date(`${inicio}T12:00:00`).getTime()) / 86400000) + 1);
+    const fimAnterior = moverDias(inicio, -1);
+    const inicioAnterior = moverDias(fimAnterior, -(duracao - 1));
+    const anteriores = periodoInvalido || !colunaData ? [] : filtrarPeriodo(inicioAnterior, fimAnterior);
+    const grupos = colunas
+      .filter((coluna) => coluna.tipo === "texto" && !/nome|usuario|usuário|email|e-mail|telefone|cpf/i.test(coluna.nome))
+      .slice(0, 2);
+    const distribuicoes = grupos.map((grupo) => {
+      const agrupados = selecionadas.reduce<Record<string, { total: number; valor: number }>>((acc, linha) => {
+        const chave = String(linha[grupo.nome] ?? "").trim() || "Sem informação";
+        acc[chave] ??= { total: 0, valor: 0 };
+        acc[chave].total += 1;
+        acc[chave].valor += Math.abs(Number(linha.Valor) || 0);
+        return acc;
+      }, {});
+      return {
+        nome: grupo.nome,
+        valores: Object.entries(agrupados)
+          .map(([nome, dados]) => ({ nome, ...dados, percentual: selecionadas.length ? dados.total / selecionadas.length * 100 : 0 }))
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 8),
+      };
+    });
+    const financeiroAtual = temFinanceiro ? calcularFinanceiro(selecionadas) : null;
+    const financeiroAnterior = temFinanceiro && colunaData ? calcularFinanceiro(anteriores) : null;
+    const saldo = financeiroAtual ? financeiroAtual.entradas - financeiroAtual.saidas : null;
+    const saldoAnterior = financeiroAnterior ? financeiroAnterior.entradas - financeiroAnterior.saidas : null;
+    return {
+      selecionadas,
+      distribuicoes,
+      financeiroAtual,
+      saldo,
+      diferencaRegistros: selecionadas.length - anteriores.length,
+      diferencaSaldo: saldo !== null && saldoAnterior !== null ? saldo - saldoAnterior : null,
+    };
+  }, [colunaData, colunas, fim, inicio, linhas, periodoInvalido, temFinanceiro]);
+  const { selecionadas, distribuicoes, financeiroAtual, saldo, diferencaRegistros, diferencaSaldo } = analise;
+  const principal = distribuicoes[0]?.valores[0];
   const resumoAutomatico = selecionadas.length
-    ? `No período de ${inicio.split("-").reverse().join("/")} a ${fim.split("-").reverse().join("/")}, foram encontrados ${selecionadas.length} registros${colunaData ? ` pela coluna ${colunaData}` : " no conjunto de dados"}.${distribuicoes[0]?.valores.length ? ` O grupo mais frequente em ${distribuicoes[0].nome} foi ${distribuicoes[0].valores[0][0]}, com ${distribuicoes[0].valores[0][1]} registros.` : ""}`
-    : "Nenhum registro encontrado para a semana selecionada.";
+    ? `Entre ${formatarData(inicio)} e ${formatarData(fim)}, foram registrados ${selecionadas.length} lançamento${selecionadas.length === 1 ? "" : "s"}.${financeiroAtual ? ` As entradas somaram ${moeda(financeiroAtual.entradas)}, as saídas ${moeda(financeiroAtual.saidas)} e o saldo do período foi ${moeda(saldo ?? 0)}.` : ""}${principal ? ` Em ${distribuicoes[0].nome}, ${principal.nome} foi o item mais frequente, com ${principal.total} registro${principal.total === 1 ? "" : "s"}.` : ""}`
+    : periodoInvalido
+      ? "A data inicial precisa ser menor ou igual à data final."
+      : "Nenhum registro foi encontrado no período selecionado.";
+  const textoAtual = textoResumo ?? resumoAutomatico;
+
+  function invalidarResumo() {
+    setTextoResumo(null);
+    setFonteResumo("automatico");
+    setHistoricoResumo(null);
+    setErroIA(null);
+  }
+
+  function limparFiltros() {
+    setPeriodoTipo("semana");
+    setDataReferencia(inicioSemanaHoje());
+    setInicioPersonalizado(inicioSemanaHoje());
+    setFimPersonalizado(hojeIso());
+    setColunaData(datas[0]?.nome ?? "");
+    invalidarResumo();
+  }
+
+  function editarResumo(texto: string) {
+    if (fonteResumo !== "editado") setHistoricoResumo({ texto: textoResumo, fonte: fonteResumo });
+    setTextoResumo(texto);
+    setFonteResumo("editado");
+  }
+
+  function desfazerResumo() {
+    if (!historicoResumo) return;
+    setTextoResumo(historicoResumo.texto);
+    setFonteResumo(historicoResumo.fonte);
+    setHistoricoResumo(null);
+  }
+
+  function usarAutomatico() {
+    setHistoricoResumo({ texto: textoResumo, fonte: fonteResumo });
+    setTextoResumo(null);
+    setFonteResumo("automatico");
+  }
 
   async function gerarComIA() {
     setGerandoIA(true);
     setErroIA(null);
     try {
-      const resp = await fetch("/api/ia/resumo", {
+      const resposta = await fetch("/api/ia/resumo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -78,16 +209,21 @@ export default function ResumoCompartilhavel({ projetoSlug, projetoNome, colunas
           periodo: { inicio, fim },
           registros: selecionadas.length,
           baseCompleta: linhas.length,
-          distribuicoes: distribuicoes.filter((d) => d.valores.length),
-          valoresFinanceiros,
+          distribuicoes: distribuicoes.filter((distribuicao) => distribuicao.valores.length).map((distribuicao) => ({
+            nome: distribuicao.nome,
+            valores: distribuicao.valores.map((item) => [item.nome, item.total]),
+          })),
+          valoresFinanceiros: financeiroAtual,
         }),
       });
-      const dados = await resp.json();
-      if (!resp.ok || !dados.resumo) {
+      const dados = await resposta.json();
+      if (!resposta.ok || !dados.resumo) {
         setErroIA(dados.erro ?? "Não consegui gerar o resumo com IA.");
         return;
       }
-      setTextoEditado(dados.resumo);
+      setHistoricoResumo({ texto: textoResumo, fonte: fonteResumo });
+      setTextoResumo(dados.resumo);
+      setFonteResumo("ia");
     } catch {
       setErroIA("Não consegui falar com o serviço de IA.");
     } finally {
@@ -95,27 +231,81 @@ export default function ResumoCompartilhavel({ projetoSlug, projetoNome, colunas
     }
   }
 
-  return <div className="print-report mx-auto w-full max-w-4xl p-6">
-    <div className="print-hide mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-      <div><h1 className="text-lg font-bold">Resumo para compartilhar</h1><p className="text-sm text-text-muted">{projetoNome}</p></div>
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={gerarComIA} disabled={gerandoIA} className="flex items-center gap-2 rounded-md border border-accent px-3 py-2 text-sm font-semibold text-accent disabled:opacity-60"><Sparkles size={16} /> {gerandoIA ? "Gerando..." : "Gerar com IA"}</button>
-        <button type="button" onClick={() => window.print()} className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white"><Printer size={16} /> Imprimir / salvar PDF</button>
+  async function compartilhar() {
+    const conteudo = `${projetoNome}\nResumo de ${formatarData(inicio)} a ${formatarData(fim)}\n\n${textoAtual}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Resumo - ${projetoNome}`, text: conteudo });
+        setAvisoCompartilhar("Resumo compartilhado");
+      } else {
+        await navigator.clipboard.writeText(conteudo);
+        setAvisoCompartilhar("Resumo copiado");
+      }
+      window.setTimeout(() => setAvisoCompartilhar(null), 2500);
+    } catch (erro) {
+      if (erro instanceof DOMException && erro.name === "AbortError") return;
+      setAvisoCompartilhar("Não foi possível compartilhar");
+    }
+  }
+
+  const seloResumo = fonteResumo === "automatico" ? "Resumo automático" : fonteResumo === "ia" ? "Revisado por IA" : "Texto editado";
+
+  return <div className="print-report w-full pb-10">
+    <div className="print-hide sticky top-14 z-20 border-b border-border bg-surface/95 backdrop-blur md:top-0">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-3 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="min-w-0"><h1 className="truncate text-base font-bold sm:text-lg">Resumo financeiro</h1><p className="truncate text-xs text-text-muted sm:text-sm">{projetoNome}</p></div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="grid min-w-48 flex-1 grid-cols-2 rounded-md border border-border bg-surface-2 p-1 sm:flex-none" aria-label="Modo da tela">
+            {([['editar', 'Editar'], ['visualizar', 'Visualizar']] as const).map(([valor, rotulo]) => <button key={valor} type="button" onClick={() => setModo(valor)} className={`min-h-9 rounded px-3 text-sm font-semibold transition ${modo === valor ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text"}`}>{rotulo}</button>)}
+          </div>
+          <button type="button" onClick={gerarComIA} disabled={gerandoIA || periodoInvalido} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border border-accent px-3 text-sm font-semibold text-accent transition hover:bg-accent-soft disabled:opacity-60 sm:flex-none"><Sparkles size={16} /> {gerandoIA ? "Gerando..." : fonteResumo === "ia" ? "Gerar novamente" : "Melhorar com IA"}</button>
+          <button type="button" onClick={compartilhar} className="grid h-11 w-11 place-items-center rounded-md border border-border bg-surface text-text hover:bg-surface-2" title="Compartilhar resumo" aria-label="Compartilhar resumo"><Share2 size={17} /></button>
+          <div className="relative">
+            <button type="button" onClick={() => setExportarAberto((aberto) => !aberto)} className="flex min-h-11 items-center gap-2 rounded-md bg-accent px-3 text-sm font-semibold text-white hover:brightness-95" aria-expanded={exportarAberto}><FileDown size={17} /> Exportar <ChevronDown size={15} /></button>
+            {exportarAberto && <div className="absolute right-0 top-12 z-30 w-56 rounded-md border border-border bg-surface p-1 shadow-lg"><button type="button" onClick={() => { setExportarAberto(false); window.print(); }} className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-surface-2"><Printer size={16} /> Imprimir ou salvar PDF</button></div>}
+          </div>
+        </div>
       </div>
     </div>
-    {erroIA && <p className="print-hide mb-4 text-sm text-red-700">{erroIA}</p>}
-    <div className="print-hide mb-8 flex flex-wrap gap-4">
-      <label className="text-xs text-text-muted">Semana<input type="date" value={semana} onChange={(e) => { setSemana(e.target.value); setTextoEditado(null); }} className="mt-1 block rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" /></label>
-      {datas.length > 0 && <label className="text-xs text-text-muted">Coluna de data<select value={colunaData} onChange={(e) => { setColunaData(e.target.value); setTextoEditado(null); }} className="mt-1 block rounded-md border border-border bg-surface px-3 py-2 text-sm text-text">{datas.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}</select></label>}
-      {datas.length === 0 && <p className="self-end text-sm text-amber-700">Sem coluna de data: o resumo inclui todos os registros.</p>}
+
+    <div className="mx-auto w-full max-w-6xl px-3 pt-4 sm:px-6 sm:pt-6 lg:px-8">
+      {avisoCompartilhar && <p role="status" className="print-hide mb-4 rounded-md bg-live-soft px-3 py-2 text-sm font-medium text-live">{avisoCompartilhar}</p>}
+      {erroIA && <p role="alert" className="print-hide mb-4 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{erroIA}</p>}
+
+      {modo === "editar" && <section className="print-hide mb-6 border-b border-border pb-6" aria-label="Filtros do relatório">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-xs font-medium text-text-muted">Período</span><div className="grid min-h-11 grid-cols-3 rounded-md border border-border bg-surface p-1">
+              {([['semana', 'Semana'], ['mes', 'Mês'], ['personalizado', 'Personalizado']] as const).map(([valor, rotulo]) => <button key={valor} type="button" onClick={() => { setPeriodoTipo(valor); invalidarResumo(); }} className={`rounded px-2 text-xs font-semibold transition ${periodoTipo === valor ? "bg-accent text-white" : "text-text-muted hover:bg-surface-2 hover:text-text"}`}>{rotulo}</button>)}
+            </div></div>
+            {periodoTipo === "semana" && <label className="text-xs text-text-muted">Semana de referência<input type="date" value={dataReferencia} onChange={(evento) => { setDataReferencia(evento.target.value); invalidarResumo(); }} className="mt-1 block min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text" /></label>}
+            {periodoTipo === "personalizado" && <><label className="text-xs text-text-muted">Data inicial<input type="date" value={inicioPersonalizado} onChange={(evento) => { setInicioPersonalizado(evento.target.value); invalidarResumo(); }} className="mt-1 block min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text" /></label><label className="text-xs text-text-muted">Data final<input type="date" value={fimPersonalizado} onChange={(evento) => { setFimPersonalizado(evento.target.value); invalidarResumo(); }} className="mt-1 block min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text" /></label></>}
+            {datas.length > 0 && <label className="text-xs text-text-muted">Coluna de data<select value={colunaData} onChange={(evento) => { setColunaData(evento.target.value); invalidarResumo(); }} className="mt-1 block min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-text">{datas.map((coluna) => <option key={coluna.nome} value={coluna.nome}>{coluna.nome}</option>)}</select></label>}
+          </div>
+          <button type="button" onClick={limparFiltros} className="flex min-h-11 items-center justify-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-text-muted hover:bg-surface-2 hover:text-text"><RotateCcw size={16} /> Limpar filtros</button>
+        </div>
+        {datas.length === 0 && <p className="mt-3 text-sm text-amber-700">Sem coluna de data: o resumo inclui todos os registros.</p>}
+        <p className="mt-4 flex items-center gap-2 text-sm font-medium text-text-muted"><CalendarDays size={16} /> {formatarData(inicio, true)} – {formatarData(fim, true)}</p>
+      </section>}
+
+      <article className="overflow-hidden rounded-md border border-slate-200 bg-white text-slate-950 shadow-sm">
+        <header className="border-b-2 border-blue-700 px-4 py-5 sm:px-6 sm:py-7"><p className="truncate text-sm font-semibold text-blue-700">{projetoNome}</p><h2 className="mt-1 text-xl font-bold sm:text-2xl">Resumo do período</h2><div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600"><span>{formatarData(inicio)} a {formatarData(fim)}</span><span aria-hidden="true">·</span><span>{selecionadas.length} registro{selecionadas.length === 1 ? "" : "s"}</span></div></header>
+
+        <section className={`grid gap-px border-b border-slate-200 bg-slate-200 ${financeiroAtual ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`} aria-label="Indicadores do período">
+          <div className="min-w-0 bg-white p-4 sm:p-6"><p className="text-[11px] font-medium uppercase text-slate-500 sm:text-xs">Registros</p><p className="mt-1 text-2xl font-bold sm:text-3xl">{selecionadas.length}</p>{colunaData && <p className={`mt-1 text-xs ${diferencaRegistros >= 0 ? "text-emerald-700" : "text-red-700"}`}>{diferencaRegistros >= 0 ? "+" : ""}{diferencaRegistros} vs. período anterior</p>}</div>
+          {financeiroAtual ? <><div className="min-w-0 bg-white p-4 sm:p-6"><p className="text-[11px] font-medium uppercase text-slate-500 sm:text-xs">Entradas</p><p className="mt-1 break-words text-lg font-bold text-emerald-700 sm:text-xl">{moeda(financeiroAtual.entradas)}</p></div><div className="min-w-0 bg-white p-4 sm:p-6"><p className="text-[11px] font-medium uppercase text-slate-500 sm:text-xs">Saídas</p><p className="mt-1 break-words text-lg font-bold text-red-700 sm:text-xl">{moeda(financeiroAtual.saidas)}</p></div><div className="min-w-0 bg-white p-4 sm:p-6"><p className="text-[11px] font-medium uppercase text-slate-500 sm:text-xs">Saldo</p><p className={`mt-1 break-words text-lg font-bold sm:text-xl ${(saldo ?? 0) < 0 ? "text-red-700" : "text-emerald-700"}`}>{moeda(saldo ?? 0)}</p>{diferencaSaldo !== null && <p className="mt-1 text-xs text-slate-500">{diferencaSaldo >= 0 ? "+" : ""}{moeda(diferencaSaldo)} vs. anterior</p>}</div></> : <div className="min-w-0 bg-white p-4 sm:p-6"><p className="text-[11px] font-medium uppercase text-slate-500 sm:text-xs">Base completa</p><p className="mt-1 text-2xl font-bold sm:text-3xl">{linhas.length}</p></div>}
+        </section>
+
+        <section className="border-b border-slate-200 px-4 py-5 sm:px-6 sm:py-6">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><h3 className="text-base font-semibold">Visão geral</h3><span className={`print-hide rounded-full px-2 py-0.5 text-xs font-medium ${fonteResumo === "ia" ? "bg-accent-soft text-accent" : fonteResumo === "editado" ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600"}`}>{seloResumo}</span></div>{modo === "editar" && <div className="print-hide flex flex-wrap items-center gap-1">{historicoResumo && <button type="button" onClick={desfazerResumo} className="flex min-h-9 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-text-muted hover:bg-surface-2 hover:text-text"><Undo2 size={14} /> Desfazer</button>}{fonteResumo !== "automatico" && <button type="button" onClick={usarAutomatico} className="min-h-9 rounded-md px-2 text-xs font-semibold text-text-muted hover:bg-surface-2 hover:text-text">Usar automático</button>}</div>}</div>
+          {modo === "editar" ? <textarea aria-label="Editar texto do resumo" value={textoAtual} onChange={(evento) => editarResumo(evento.target.value)} className="print-hide min-h-36 w-full resize-y rounded-md border border-border p-3 text-base leading-6 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft sm:min-h-28 sm:text-sm" /> : <p className="whitespace-pre-wrap text-sm leading-6">{textoAtual}</p>}
+          <p className="print-show hidden whitespace-pre-wrap text-sm leading-6">{textoAtual}</p>
+        </section>
+
+        {distribuicoes.filter((distribuicao) => distribuicao.valores.length).map((distribuicao) => <section key={distribuicao.nome} className="border-b border-slate-200 px-4 py-5 sm:px-6 sm:py-6"><div className="mb-4 flex items-baseline justify-between gap-3"><h3 className="text-base font-semibold">Distribuição por {distribuicao.nome}</h3><span className="text-xs text-slate-500">% dos registros</span></div><div className="space-y-5 sm:space-y-4">{distribuicao.valores.map((item) => <div key={item.nome}><div className="mb-2 flex min-w-0 items-start justify-between gap-3 text-sm"><span className="min-w-0 truncate font-medium">{item.nome}</span><span className="shrink-0 text-right tabular-nums text-slate-600">{item.total} · {item.percentual.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}%{temFinanceiro ? ` · ${moeda(item.valor)}` : ""}</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-blue-700" style={{ width: `${item.percentual}%` }} /></div></div>)}</div></section>)}
+
+        <footer className="px-4 py-4 text-xs leading-5 text-slate-500 sm:px-6">Gerado em {new Date().toLocaleDateString("pt-BR")} · Dados do projeto {projetoNome}</footer>
+      </article>
     </div>
-    <article className="bg-white text-slate-950">
-      <div className="border-b-2 border-blue-700 pb-5"><p className="text-sm font-semibold text-blue-700">{projetoNome}</p><h2 className="mt-1 text-2xl font-bold">Resumo do período</h2><p className="mt-1 text-sm text-slate-600">{inicio.split("-").reverse().join("/")} a {fim.split("-").reverse().join("/")}</p></div>
-      <section className="grid grid-cols-2 gap-6 border-b border-slate-200 py-6"><div><p className="text-xs uppercase text-slate-500">Registros no período</p><p className="text-3xl font-bold">{selecionadas.length}</p></div><div><p className="text-xs uppercase text-slate-500">Base completa</p><p className="text-3xl font-bold">{linhas.length}</p></div></section>
-      {valoresFinanceiros && <section className="grid grid-cols-2 gap-6 border-b border-slate-200 py-6"><div><p className="text-xs uppercase text-slate-500">Entradas</p><p className="text-xl font-bold text-emerald-700">{valoresFinanceiros.entradas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div><div><p className="text-xs uppercase text-slate-500">Saídas</p><p className="text-xl font-bold text-red-700">{valoresFinanceiros.saidas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p></div></section>}
-      <section className="border-b border-slate-200 py-6"><h3 className="mb-3 text-base font-semibold">Visão geral</h3><textarea aria-label="Editar texto do resumo" value={textoEditado ?? resumoAutomatico} onChange={(e) => setTextoEditado(e.target.value)} className="print-hide min-h-24 w-full resize-y rounded-md border border-border p-3 text-sm leading-6" /><p className="print-show hidden whitespace-pre-wrap text-sm leading-6">{textoEditado ?? resumoAutomatico}</p></section>
-      {distribuicoes.filter((d) => d.valores.length).map((distribuicao) => <section key={distribuicao.nome} className="border-b border-slate-200 py-6"><h3 className="mb-4 text-base font-semibold">Distribuição por {distribuicao.nome}</h3><div className="space-y-3">{distribuicao.valores.map(([nome, total]) => <div key={nome} className="grid grid-cols-[minmax(0,1fr)_2fr_36px] items-center gap-3 text-sm"><span className="truncate">{nome}</span><div className="h-2 bg-slate-200"><div className="h-2 bg-blue-700" style={{ width: `${total / distribuicao.valores[0][1] * 100}%` }} /></div><span className="text-right tabular-nums">{total}</span></div>)}</div></section>)}
-      <footer className="mt-6 border-t border-slate-200 pt-3 text-xs text-slate-500">Gerado em {new Date().toLocaleDateString("pt-BR")} · Dados do projeto {projetoNome}</footer>
-    </article>
   </div>;
 }

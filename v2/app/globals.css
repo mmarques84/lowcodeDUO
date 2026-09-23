@@ -55,7 +55,7 @@ body {
 @media print {
   @page { size: A4; margin: 16mm; }
   body, main { background: white !important; color: #0f172a !important; }
-  main { overflow: visible !important; }
+  main { overflow: visible !important; padding-top: 0 !important; }
   aside, .print-hide { display: none !important; }
   .print-show { display: block !important; }
   .print-report { max-width: none !important; padding: 0 !important; }
