@@ -251,14 +251,14 @@ export default function ResumoCompartilhavel({ projetoSlug, projetoNome, colunas
   const seloResumo = fonteResumo === "automatico" ? "Resumo automático" : fonteResumo === "ia" ? "Revisado por IA" : "Texto editado";
 
   return <div className="print-report w-full pb-10">
-    <div className="print-hide sticky top-14 z-20 border-b border-border bg-surface/95 backdrop-blur md:top-0">
+    <div className="print-hide relative z-20 border-b border-border bg-surface/95 md:sticky md:top-0 md:backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-3 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div className="min-w-0"><h1 className="truncate text-base font-bold sm:text-lg">Resumo financeiro</h1><p className="truncate text-xs text-text-muted sm:text-sm">{projetoNome}</p></div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="grid min-w-48 flex-1 grid-cols-2 rounded-md border border-border bg-surface-2 p-1 sm:flex-none" aria-label="Modo da tela">
+        <div className="grid grid-cols-[minmax(0,1fr)_44px_auto] items-center gap-2 sm:flex sm:flex-wrap">
+          <div className="col-span-3 grid grid-cols-2 rounded-md border border-border bg-surface-2 p-1 sm:col-auto sm:min-w-48" aria-label="Modo da tela">
             {([['editar', 'Editar'], ['visualizar', 'Visualizar']] as const).map(([valor, rotulo]) => <button key={valor} type="button" onClick={() => setModo(valor)} className={`min-h-9 rounded px-3 text-sm font-semibold transition ${modo === valor ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text"}`}>{rotulo}</button>)}
           </div>
-          <button type="button" onClick={gerarComIA} disabled={gerandoIA || periodoInvalido} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border border-accent px-3 text-sm font-semibold text-accent transition hover:bg-accent-soft disabled:opacity-60 sm:flex-none"><Sparkles size={16} /> {gerandoIA ? "Gerando..." : fonteResumo === "ia" ? "Gerar novamente" : "Melhorar com IA"}</button>
+          <button type="button" onClick={gerarComIA} disabled={gerandoIA || periodoInvalido} className="flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-md border border-accent px-3 text-sm font-semibold text-accent transition hover:bg-accent-soft disabled:opacity-60 sm:flex-none"><Sparkles size={16} className="shrink-0" /> {gerandoIA ? "Gerando..." : fonteResumo === "ia" ? <><span className="sm:hidden">Regenerar</span><span className="hidden sm:inline">Gerar novamente</span></> : <><span className="sm:hidden">Melhorar IA</span><span className="hidden sm:inline">Melhorar com IA</span></>}</button>
           <button type="button" onClick={compartilhar} className="grid h-11 w-11 place-items-center rounded-md border border-border bg-surface text-text hover:bg-surface-2" title="Compartilhar resumo" aria-label="Compartilhar resumo"><Share2 size={17} /></button>
           <div className="relative">
             <button type="button" onClick={() => setExportarAberto((aberto) => !aberto)} className="flex min-h-11 items-center gap-2 rounded-md bg-accent px-3 text-sm font-semibold text-white hover:brightness-95" aria-expanded={exportarAberto}><FileDown size={17} /> Exportar <ChevronDown size={15} /></button>
