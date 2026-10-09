@@ -26,26 +26,26 @@ export default async function PaginaRelatorio({
   const relatorioGenerico = modoFinanceiro ? null : await buscarRelatorioGenerico(projeto.id);
 
   return (
-    <div className="mx-auto w-full max-w-6xl p-6">
+    <div className="mx-auto w-full max-w-6xl p-4 sm:p-6">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold">Relatórios</h1>
-          <p className="text-sm text-text-muted">{projeto.nome}</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text-muted">{modoFinanceiro ? "Relatório financeiro" : "Análise de planilha"}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{projeto.nome}</h1>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Link href={`/relatorios/${projeto.slug}/importar`} className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text hover:bg-surface-2"><RefreshCw size={16} /> Atualizar dados</Link>
+          <Link href={`/relatorios/${projeto.slug}/importar`} className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110"><RefreshCw size={16} /> Atualizar planilha</Link>
           <Link href={`/relatorios/${projeto.slug}/resumo`} className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text hover:bg-surface-2"><FileText size={16} /> Gerar resumo</Link>
           <NovoLancamentoOpcional projetoId={projeto.id} projetoSlug={projeto.slug} />
         </div>
       </header>
 
-      <PainelIA
+      {modoFinanceiro && <PainelIA
         projetoId={projeto.id}
         projetoSlug={projeto.slug}
         modo={modoFinanceiro ? "financeiro" : "generico"}
         lancamentos={modoFinanceiro ? lancamentos : undefined}
         relatorioGenerico={modoFinanceiro ? undefined : relatorioGenerico}
-      />
+      />}
 
       {modoFinanceiro ? (
         <RelatorioFinanceiro projetoId={projeto.id} projetoSlug={projeto.slug} lancamentos={lancamentos} />
@@ -64,6 +64,7 @@ export default async function PaginaRelatorio({
           </Link>
         </div>
       )}
+      {!modoFinanceiro && relatorioGenerico && <details className="mt-6 rounded-xl border border-border bg-surface"><summary className="cursor-pointer px-5 py-4 text-sm font-medium text-text-muted">Ferramentas do painel · organização e assistente</summary><div className="border-t border-border p-4"><p className="mb-4 text-xs text-text-muted">Estas ferramentas usam configurações próprias. Para mudar os cálculos acima, use Ajustar análise.</p><PainelIA projetoId={projeto.id} projetoSlug={projeto.slug} modo="generico" relatorioGenerico={relatorioGenerico} /></div></details>}
     </div>
   );
 }

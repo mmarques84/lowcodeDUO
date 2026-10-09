@@ -1,3 +1,15 @@
+## Configuração de análises de planilhas
+
+Em **Importar planilha**, selecione a aba, confira as colunas e personalize a análise na grade editável. As sugestões iniciais são feitas pelas colunas, sem chamada à IA. Cálculo e agrupamento são exibidos diretamente; **Período, filtros e contexto** permite definir intervalo de datas e filtros de igualdade, diferença ou conteúdo. Todos os filtros são combinados com E. Os dados originais são preservados.
+
+Use **Salvar modelo** para reutilizar a configuração nas próximas importações do projeto. No relatório genérico, os resultados aparecem primeiro; **Ajustar análise** abre um painel lateral com configuração, prévia dos cálculos e botão **Aplicar alterações**. Alterações pendentes não modificam os resultados até serem aplicadas. **Ver prompt** mostra o texto gerado pela configuração e permite copiá-lo para usar com a planilha anexada em outra IA. O prompt também aparece na etapa de configuração da importação. Não há envio automático à IA.
+
+O modelo é salvo no armazenamento local do navegador por projeto, como os widgets existentes; não é sincronizado entre dispositivos nem incluído no histórico de versões. Esta configuração afeta o painel genérico e a prévia da importação; o resumo separado e os widgets da conversa com IA mantêm suas próprias configurações. As ferramentas anteriores de organização e assistente ficam recolhidas abaixo dos resultados. Cada importação analisa uma aba; cruzamentos entre abas não estão incluídos.
+
+Em **Ver prompt → Editar prompt**, edite as instruções estruturadas e use **Aplicar alterações** (ou **Gerar análise / Salvar modelo** durante a importação). O sistema interpreta as seções de cálculo, período, filtros, colunas e entrega para atualizar a configuração e recalcular os resultados. **Interpretar e conferir configuração** atualiza o rascunho antes da aplicação. Exemplos de cálculo: `Soma de Valor Total por Vendedor`, `Média de Valor Total por Categoria` ou `Contagem de registros por Produto`. Os nomes devem corresponder às colunas da planilha. Datas usam AAAA-MM-DD; filtros seguem o formato `1. Categoria é igual a "Calcados".`. Contexto e objetivo identificam a análise; para mudar os números, edite CÁLCULO.
+
+O interpretador é local e limitado ao modelo estruturado; não é um modelo de IA para instruções livres. Instruções desconhecidas, colunas inexistentes, datas inválidas e troca de aba interrompem a aplicação com uma explicação, sem aplicar mudanças parciais. **Copiar prompt** continua copiando o texto para uso em outra IA. **Restaurar automático** volta ao texto gerado pela configuração atual. Não há envio automático à IA. Teste a integração com `npm run test:prompt`.
+
 ## lowcodeDUO: alertas e resumo semanal
 
 Execute `migrations/003_alertas.sql` no banco MySQL. A importacao mostra problemas da planilha antes da confirmacao; depois, eles aparecem em **Alertas** no menu do projeto. Regras por coluna sao avaliadas nas proximas importacoes.

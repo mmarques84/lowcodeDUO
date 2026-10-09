@@ -26,15 +26,14 @@ export default function ModalNovoProjeto() {
     setArquivo(null);
   }
 
-  function lerArquivoXlsx(file: File): Promise<Record<string, unknown>[]> {
+  function lerArquivoXlsx(file: File): Promise<{ nome: string; rows: Record<string, unknown>[] }[]> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const wb = XLSX.read(data, { type: "array" });
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          resolve(XLSX.utils.sheet_to_json(sheet, { defval: "" }));
+          resolve(wb.SheetNames.map((nome) => ({ nome, rows: XLSX.utils.sheet_to_json(wb.Sheets[nome], { defval: "" }) })));
         } catch (err) {
           reject(err);
         }
@@ -52,9 +51,11 @@ export default function ModalNovoProjeto() {
     }
 
     let rows: Record<string, unknown>[] | null = null;
+    let abas: { nome: string; rows: Record<string, unknown>[] }[] = [];
     if (arquivo) {
       try {
-        rows = await lerArquivoXlsx(arquivo);
+        abas = await lerArquivoXlsx(arquivo);
+        rows = abas.find((a) => a.rows.length)?.rows ?? [];
       } catch {
         aviso("Não consegui ler essa planilha. Confira se é um .xlsx válido.", "error", "Arquivo inválido");
         return;
@@ -87,7 +88,7 @@ export default function ModalNovoProjeto() {
       }
 
       const colunas = detectarColunas(rows);
-      if (pareceLancamentoAluguel(colunas.map((c) => c.nome))) {
+      if (abas.length === 1 && pareceLancamentoAluguel(colunas.map((c) => c.nome))) {
         const loteResp = await fetch("/api/lancamentos/importar-lote", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -104,10 +105,10 @@ export default function ModalNovoProjeto() {
       } else {
         sessionStorage.setItem(
           CHAVE_IMPORT_PENDENTE,
-          JSON.stringify({ arquivoNome: arquivo?.name ?? "", rows, colunas })
+          JSON.stringify({ arquivoNome: arquivo?.name ?? "", rows, colunas, abas })
         );
         aviso(
-          `Projeto "${corpo.projeto.nome}" criado. Essa planilha não é de lançamentos — confira as colunas detectadas.`,
+          `Projeto "${corpo.projeto.nome}" criado. Confira a aba e personalize sua análise.`,
           "info",
           "Confirme os dados"
         );
